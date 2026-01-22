@@ -40,15 +40,31 @@ const todayStats = {
   remaining: 6,
 };
 
-const weekSchedule = [
-  { day: 'Mon', scheduled: 24, completed: 24 },
-  { day: 'Tue', scheduled: 22, completed: 22 },
-  { day: 'Wed', scheduled: 24, completed: 18, today: true },
-  { day: 'Thu', scheduled: 20, completed: 0 },
-  { day: 'Fri', scheduled: 18, completed: 0 },
-];
+// Business health metrics - past 30 days
+const businessHealth = {
+  retention: {
+    value: 94.2,
+    change: +1.8,
+    label: 'Customer retention',
+  },
+  avgRevenue: {
+    value: 127,
+    change: +12,
+    label: 'Avg revenue/customer',
+  },
+  outstanding: {
+    value: 2847.5,
+    invoices: 8,
+    label: 'Outstanding receivables',
+  },
+  churn: {
+    lost: 2,
+    gained: 7,
+    label: 'Customer changes',
+  },
+};
 
-export default function DashboardPage() {
+export default function DashboardHybridPage() {
   return (
     <div className="min-h-screen">
       {/* Header */}
@@ -63,6 +79,82 @@ export default function DashboardPage() {
         <h1 className="text-3xl font-bold text-slate-900 mt-1">
           Good afternoon
         </h1>
+      </motion.div>
+
+      {/* Business Health Strip - Past 30 Days */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.05 }}
+        className="mb-8"
+      >
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-sm font-medium text-slate-500 uppercase tracking-wide">
+            Past 30 days
+          </h2>
+        </div>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Retention */}
+          <div className="bg-white border border-slate-200 rounded-xl p-4">
+            <p className="text-sm text-slate-500">{businessHealth.retention.label}</p>
+            <div className="flex items-end gap-2 mt-1">
+              <span className="text-2xl font-bold text-slate-900">
+                {businessHealth.retention.value}%
+              </span>
+              <span className={`text-sm font-medium mb-0.5 ${businessHealth.retention.change >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                {businessHealth.retention.change >= 0 ? '+' : ''}{businessHealth.retention.change}%
+              </span>
+            </div>
+          </div>
+
+          {/* Avg Revenue */}
+          <div className="bg-white border border-slate-200 rounded-xl p-4">
+            <p className="text-sm text-slate-500">{businessHealth.avgRevenue.label}</p>
+            <div className="flex items-end gap-2 mt-1">
+              <span className="text-2xl font-bold text-slate-900">
+                ${businessHealth.avgRevenue.value}
+              </span>
+              <span className={`text-sm font-medium mb-0.5 ${businessHealth.avgRevenue.change >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                {businessHealth.avgRevenue.change >= 0 ? '+' : ''}${businessHealth.avgRevenue.change}
+              </span>
+            </div>
+          </div>
+
+          {/* Outstanding */}
+          <Link
+            href="/invoices?filter=overdue"
+            className="bg-white border border-slate-200 rounded-xl p-4 hover:border-amber-300 hover:bg-amber-50/50 transition-all group"
+          >
+            <p className="text-sm text-slate-500">{businessHealth.outstanding.label}</p>
+            <div className="flex items-end gap-2 mt-1">
+              <span className="text-2xl font-bold text-slate-900 group-hover:text-amber-700">
+                ${businessHealth.outstanding.value.toLocaleString()}
+              </span>
+              <span className="text-sm text-slate-400 mb-0.5">
+                {businessHealth.outstanding.invoices} invoices
+              </span>
+            </div>
+          </Link>
+
+          {/* Customer Changes */}
+          <div className="bg-white border border-slate-200 rounded-xl p-4">
+            <p className="text-sm text-slate-500">{businessHealth.churn.label}</p>
+            <div className="flex items-center gap-3 mt-1">
+              <span className="flex items-center gap-1">
+                <svg className="w-4 h-4 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                </svg>
+                <span className="text-lg font-semibold text-green-600">+{businessHealth.churn.gained}</span>
+              </span>
+              <span className="flex items-center gap-1">
+                <svg className="w-4 h-4 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                </svg>
+                <span className="text-lg font-semibold text-red-500">-{businessHealth.churn.lost}</span>
+              </span>
+            </div>
+          </div>
+        </div>
       </motion.div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -135,49 +227,6 @@ export default function DashboardPage() {
               </div>
             )}
           </div>
-
-          {/* This Week */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="mt-8"
-          >
-            <h2 className="text-lg font-semibold text-slate-900 mb-4">
-              This week
-            </h2>
-            <div className="bg-white border border-slate-200 rounded-xl p-5">
-              <div className="flex justify-between gap-2">
-                {weekSchedule.map((day) => (
-                  <div
-                    key={day.day}
-                    className={`flex-1 text-center ${day.today ? '' : ''}`}
-                  >
-                    <p className={`text-xs font-medium mb-2 ${day.today ? 'text-blue-600' : 'text-slate-400'}`}>
-                      {day.day}
-                    </p>
-                    <div className="relative">
-                      {/* Background bar */}
-                      <div className="h-24 bg-slate-100 rounded-lg relative overflow-hidden">
-                        {/* Completed portion */}
-                        <div
-                          className={`absolute bottom-0 left-0 right-0 rounded-lg transition-all ${
-                            day.today ? 'bg-blue-500' : 'bg-slate-300'
-                          }`}
-                          style={{
-                            height: `${(day.completed / day.scheduled) * 100}%`,
-                          }}
-                        />
-                      </div>
-                    </div>
-                    <p className="text-xs text-slate-500 mt-2">
-                      {day.completed}/{day.scheduled}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </motion.div>
         </motion.div>
 
         {/* Right column - Today */}
@@ -260,12 +309,12 @@ export default function DashboardPage() {
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: 0.5 }}
+        transition={{ delay: 0.4 }}
         className="mt-12 pt-8 border-t border-slate-200"
       >
         <p className="text-sm text-slate-400 text-center">
-          <Link href="/dashboard-hybrid" className="text-blue-600 hover:underline">
-            View hybrid dashboard option →
+          <Link href="/dashboard" className="text-blue-600 hover:underline">
+            ← View minimal dashboard option
           </Link>
         </p>
       </motion.div>
