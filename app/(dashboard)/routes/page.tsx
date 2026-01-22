@@ -1,20 +1,55 @@
 'use client';
 
 import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Button, Badge, Card, Avatar, ProgressBar } from '@/components/ui';
 import { todayRoutes, technicians, getTechnicianById } from '@/lib/mock-data';
+
+interface RouteStop {
+  id: string;
+  order: number;
+  customerId: string;
+  customerName: string;
+  address: string;
+  status: string;
+  estimatedArrival: string;
+  estimatedDuration: number;
+}
 
 export default function RoutesPage() {
   const [selectedTech, setSelectedTech] = useState<string>('tech-1');
   const [isOptimizing, setIsOptimizing] = useState(false);
+  const [selectedStop, setSelectedStop] = useState<RouteStop | null>(null);
+  const [serviceNotes, setServiceNotes] = useState('');
+  const [chemistryReadings, setChemistryReadings] = useState({
+    chlorine: '',
+    ph: '',
+    alkalinity: '',
+    calcium: '',
+  });
 
   const selectedRoute = todayRoutes.find((r) => r.technicianId === selectedTech);
   const tech = getTechnicianById(selectedTech);
 
   const handleOptimize = () => {
     setIsOptimizing(true);
-    // Simulate optimization
     setTimeout(() => setIsOptimizing(false), 2000);
+  };
+
+  const handleStopClick = (stop: RouteStop) => {
+    setSelectedStop(stop);
+    setServiceNotes('');
+    setChemistryReadings({ chlorine: '', ph: '', alkalinity: '', calcium: '' });
+  };
+
+  const handleCloseModal = () => {
+    setSelectedStop(null);
+  };
+
+  const handleSaveService = () => {
+    // In a real app, this would save to the database
+    alert(`Service logged for ${selectedStop?.customerName}!\n\nNotes: ${serviceNotes || 'None'}\nChlorine: ${chemistryReadings.chlorine || 'N/A'}\npH: ${chemistryReadings.ph || 'N/A'}`);
+    setSelectedStop(null);
   };
 
   const getStatusColor = (status: string) => {
@@ -54,14 +89,14 @@ export default function RoutesPage() {
         <div>
           <h1 className="text-2xl font-bold text-navy-500">Routes</h1>
           <p className="mt-1 text-sm text-slate-500">
-            View and optimize today's service routes
+            View and optimize today's service routes. Click on a stop to log service.
           </p>
         </div>
         <div className="flex gap-3">
           <select
             value={selectedTech}
             onChange={(e) => setSelectedTech(e.target.value)}
-            className="px-4 py-2 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="px-4 py-2 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-slate-900"
           >
             {technicians.map((tech) => (
               <option key={tech.id} value={tech.id}>
@@ -178,7 +213,6 @@ export default function RoutesPage() {
 
                 {/* Stop markers */}
                 {selectedRoute.stops.map((stop, index) => {
-                  // Generate positions along the route path
                   const positions = [
                     { x: 50, y: 400 },
                     { x: 120, y: 300 },
@@ -194,15 +228,17 @@ export default function RoutesPage() {
                   const pos = positions[index % positions.length];
 
                   return (
-                    <g key={stop.id}>
-                      {/* Marker shadow */}
+                    <g
+                      key={stop.id}
+                      className="cursor-pointer"
+                      onClick={() => handleStopClick(stop as RouteStop)}
+                    >
                       <circle
                         cx={pos.x}
                         cy={pos.y + 3}
                         r="18"
                         fill="rgba(0,0,0,0.1)"
                       />
-                      {/* Marker background */}
                       <circle
                         cx={pos.x}
                         cy={pos.y}
@@ -216,8 +252,8 @@ export default function RoutesPage() {
                             : '#94a3b8'
                         }
                         strokeWidth="3"
+                        className="hover:stroke-[4px] transition-all"
                       />
-                      {/* Stop number */}
                       <text
                         x={pos.x}
                         y={pos.y + 5}
@@ -266,9 +302,9 @@ export default function RoutesPage() {
               </div>
             </div>
 
-            {/* Map integration notice */}
+            {/* Hint */}
             <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm rounded-lg px-3 py-2 shadow-sm">
-              <p className="text-xs text-slate-500">Map integration coming soon</p>
+              <p className="text-xs text-slate-500">Click a stop to log service</p>
             </div>
           </div>
         </Card>
@@ -290,12 +326,13 @@ export default function RoutesPage() {
             {selectedRoute?.stops.map((stop, index) => (
               <div
                 key={stop.id}
-                className={`relative flex gap-4 p-4 rounded-lg border transition-colors ${
+                onClick={() => handleStopClick(stop as RouteStop)}
+                className={`relative flex gap-4 p-4 rounded-lg border transition-all cursor-pointer ${
                   stop.status === 'in-progress'
-                    ? 'border-primary-200 bg-primary-50'
+                    ? 'border-primary-200 bg-primary-50 hover:border-primary-300'
                     : stop.status === 'completed'
-                    ? 'border-green-100 bg-green-50/50'
-                    : 'border-slate-200 bg-white hover:bg-slate-50'
+                    ? 'border-green-100 bg-green-50/50 hover:border-green-200'
+                    : 'border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300'
                 }`}
               >
                 {/* Connection line */}
@@ -351,16 +388,12 @@ export default function RoutesPage() {
                   </div>
                 </div>
 
-                {/* Actions */}
-                {stop.status === 'pending' && (
-                  <div className="flex-shrink-0">
-                    <button className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg">
-                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
-                      </svg>
-                    </button>
-                  </div>
-                )}
+                {/* Arrow indicator */}
+                <div className="flex-shrink-0 flex items-center">
+                  <svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </div>
               </div>
             ))}
           </div>
@@ -408,6 +441,164 @@ export default function RoutesPage() {
           </div>
         </div>
       </Card>
+
+      {/* Service Log Modal */}
+      <AnimatePresence>
+        {selectedStop && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50"
+            onClick={handleCloseModal}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="bg-white rounded-2xl shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="p-6 border-b border-slate-200">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <h2 className="text-xl font-bold text-slate-900">{selectedStop.customerName}</h2>
+                    <p className="text-sm text-slate-500 mt-1">{selectedStop.address}</p>
+                  </div>
+                  <button
+                    onClick={handleCloseModal}
+                    className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
+                  >
+                    <svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+                <div className="flex items-center gap-3 mt-4">
+                  {getStatusBadge(selectedStop.status)}
+                  <span className="text-sm text-slate-500">Stop #{selectedStop.order}</span>
+                  <span className="text-sm text-slate-500">ETA: {selectedStop.estimatedArrival}</span>
+                </div>
+              </div>
+
+              {/* Service Form */}
+              <div className="p-6 space-y-6">
+                {/* Chemistry Readings */}
+                <div>
+                  <h3 className="text-sm font-semibold text-slate-900 mb-3">Chemistry Readings</h3>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-medium text-slate-600 mb-1">
+                        Chlorine (ppm)
+                      </label>
+                      <input
+                        type="number"
+                        step="0.1"
+                        value={chemistryReadings.chlorine}
+                        onChange={(e) => setChemistryReadings({ ...chemistryReadings, chlorine: e.target.value })}
+                        placeholder="1.0 - 3.0"
+                        className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white text-slate-900"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-slate-600 mb-1">
+                        pH Level
+                      </label>
+                      <input
+                        type="number"
+                        step="0.1"
+                        value={chemistryReadings.ph}
+                        onChange={(e) => setChemistryReadings({ ...chemistryReadings, ph: e.target.value })}
+                        placeholder="7.2 - 7.6"
+                        className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white text-slate-900"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-slate-600 mb-1">
+                        Alkalinity (ppm)
+                      </label>
+                      <input
+                        type="number"
+                        value={chemistryReadings.alkalinity}
+                        onChange={(e) => setChemistryReadings({ ...chemistryReadings, alkalinity: e.target.value })}
+                        placeholder="80 - 120"
+                        className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white text-slate-900"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-slate-600 mb-1">
+                        Calcium (ppm)
+                      </label>
+                      <input
+                        type="number"
+                        value={chemistryReadings.calcium}
+                        onChange={(e) => setChemistryReadings({ ...chemistryReadings, calcium: e.target.value })}
+                        placeholder="200 - 400"
+                        className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white text-slate-900"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Quick Actions */}
+                <div>
+                  <h3 className="text-sm font-semibold text-slate-900 mb-3">Service Performed</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {['Skimmed', 'Vacuumed', 'Brushed', 'Cleaned Filter', 'Added Chlorine', 'Adjusted pH', 'Emptied Baskets'].map((action) => (
+                      <button
+                        key={action}
+                        className="px-3 py-1.5 text-sm bg-slate-100 hover:bg-primary-100 hover:text-primary-700 rounded-full transition-colors text-slate-700"
+                      >
+                        {action}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Notes */}
+                <div>
+                  <label className="block text-sm font-semibold text-slate-900 mb-2">
+                    Service Notes
+                  </label>
+                  <textarea
+                    value={serviceNotes}
+                    onChange={(e) => setServiceNotes(e.target.value)}
+                    placeholder="Add any notes about the service..."
+                    rows={3}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none bg-white text-slate-900 placeholder:text-slate-400"
+                  />
+                </div>
+
+                {/* Photo Upload */}
+                <div>
+                  <h3 className="text-sm font-semibold text-slate-900 mb-2">Photos</h3>
+                  <div className="border-2 border-dashed border-slate-200 rounded-lg p-6 text-center hover:border-primary-300 transition-colors cursor-pointer">
+                    <svg className="w-8 h-8 text-slate-400 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    <p className="text-sm text-slate-500">Click to add photos</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="p-6 border-t border-slate-200 bg-slate-50 rounded-b-2xl flex gap-3">
+                <Button variant="outline" onClick={handleCloseModal} fullWidth>
+                  Cancel
+                </Button>
+                <Button onClick={handleSaveService} fullWidth>
+                  <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  Complete Service
+                </Button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
