@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Skill(using-superpowers)",
+      "Skill(brainstorming)",
+      "Skill(connect)",
+      "mcp__connect-apps__COMPOSIO_SEARCH_TOOLS",
+      "Skill(frontend-design)",
+      "Bash(npx create-next-app@latest:*)"
+    ]
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "connect-apps"
+  ]
+}
