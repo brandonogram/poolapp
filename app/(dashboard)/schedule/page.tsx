@@ -1,36 +1,127 @@
 'use client';
 
-import { useState } from 'react';
-import { Button, Badge, Avatar, Card } from '@/components/ui';
-import { weeklySchedule, technicians, customers } from '@/lib/mock-data';
+import { useState, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Button, Badge, Avatar, Card, Toast, useToast } from '@/components/ui';
+import { weeklySchedule, technicians, customers as initialCustomers, Customer } from '@/lib/mock-data';
 
 const daysOfWeek = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
 const fullDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
 const dates = ['Jan 20', 'Jan 21', 'Jan 22', 'Jan 23', 'Jan 24'];
 
+// Pool card component with Framer Motion animations
+function PoolCard({
+  pool,
+  onDragStart,
+  isBeingDragged,
+}: {
+  pool: Customer;
+  onDragStart: (e: React.DragEvent, customerId: string) => void;
+  isBeingDragged: boolean;
+}) {
+  return (
+    <motion.div
+      layout
+      initial={{ opacity: 0, scale: 0.8 }}
+      animate={{
+        opacity: isBeingDragged ? 0.5 : 1,
+        scale: isBeingDragged ? 0.95 : 1,
+        boxShadow: isBeingDragged ? '0 10px 25px rgba(0,0,0,0.15)' : '0 1px 3px rgba(0,0,0,0.1)'
+      }}
+      exit={{ opacity: 0, scale: 0.8 }}
+      transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+      draggable
+      onDragStart={(e) => onDragStart(e as unknown as React.DragEvent, pool.id)}
+      className="group px-2 py-1.5 bg-white border border-slate-200 rounded-md text-xs cursor-move hover:border-primary-300 hover:shadow-sm transition-all"
+    >
+      <p className="font-medium text-slate-700 truncate">{pool.name}</p>
+      <p className="text-slate-400 truncate">${pool.rate}</p>
+    </motion.div>
+  );
+}
+
+// Drop zone component with visual feedback
+function DropZone({
+  isDragOver,
+  isEmpty,
+  children,
+  onDragOver,
+  onDragLeave,
+  onDrop,
+}: {
+  isDragOver: boolean;
+  isEmpty: boolean;
+  children: React.ReactNode;
+  onDragOver: (e: React.DragEvent) => void;
+  onDragLeave: () => void;
+  onDrop: (e: React.DragEvent) => void;
+}) {
+  return (
+    <motion.div
+      animate={{
+        scale: isDragOver ? 1.02 : 1,
+        backgroundColor: isDragOver ? 'rgb(219 234 254)' : 'transparent',
+      }}
+      transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+      className={`space-y-1.5 min-h-[64px] rounded-lg p-1 transition-colors ${
+        isDragOver ? 'ring-2 ring-primary-400 ring-offset-1' : ''
+      }`}
+      onDragOver={onDragOver}
+      onDragLeave={onDragLeave}
+      onDrop={onDrop}
+    >
+      {children}
+      {isEmpty && !isDragOver && (
+        <div className="h-16 border-2 border-dashed border-slate-200 rounded-lg flex items-center justify-center text-xs text-slate-400">
+          Drop pools here
+        </div>
+      )}
+      {isDragOver && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="h-10 border-2 border-dashed border-primary-400 bg-primary-50 rounded-lg flex items-center justify-center text-xs text-primary-600 font-medium"
+        >
+          Release to move here
+        </motion.div>
+      )}
+    </motion.div>
+  );
+}
+
 export default function SchedulePage() {
   const [selectedDay, setSelectedDay] = useState(2); // Wednesday (today)
   const [dragOverCell, setDragOverCell] = useState<string | null>(null);
+  const [draggingCustomerId, setDraggingCustomerId] = useState<string | null>(null);
+  const [customerData, setCustomerData] = useState<Customer[]>(initialCustomers);
+  const { messages, addToast, dismissToast } = useToast();
 
   // Get customers for a specific day and technician
-  const getPoolsForCell = (techId: string, dayIndex: number) => {
+  const getPoolsForCell = useCallback((techId: string, dayIndex: number) => {
     const dayName = fullDays[dayIndex];
-    return customers.filter(
+    return customerData.filter(
       (c) => c.assignedTechId === techId && c.serviceDay === dayName
     );
-  };
+  }, [customerData]);
 
   // Get unscheduled pools
-  const getUnscheduledPools = () => {
-    return customers.filter((c) => !c.assignedTechId || !c.serviceDay);
-  };
+  const getUnscheduledPools = useCallback(() => {
+    return customerData.filter((c) => !c.assignedTechId || !c.serviceDay);
+  }, [customerData]);
 
   const handleDragStart = (e: React.DragEvent, customerId: string) => {
     e.dataTransfer.setData('customerId', customerId);
+    e.dataTransfer.effectAllowed = 'move';
+    setDraggingCustomerId(customerId);
+  };
+
+  const handleDragEnd = () => {
+    setDraggingCustomerId(null);
   };
 
   const handleDragOver = (e: React.DragEvent, cellId: string) => {
     e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
     setDragOverCell(cellId);
   };
 
@@ -38,14 +129,51 @@ export default function SchedulePage() {
     setDragOverCell(null);
   };
 
-  const handleDrop = (e: React.DragEvent) => {
+  const handleDrop = (e: React.DragEvent, techId: string, dayIndex: number) => {
     e.preventDefault();
     setDragOverCell(null);
-    // In a real app, this would update the customer's schedule
+    setDraggingCustomerId(null);
+
+    const customerId = e.dataTransfer.getData('customerId');
+    if (!customerId) return;
+
+    const dayName = fullDays[dayIndex];
+    const customer = customerData.find((c) => c.id === customerId);
+
+    if (!customer) return;
+
+    // Check if the customer is already in this cell
+    if (customer.assignedTechId === techId && customer.serviceDay === dayName) {
+      return; // No change needed
+    }
+
+    const tech = technicians.find((t) => t.id === techId);
+
+    // Update customer data with new assignment
+    setCustomerData((prev) =>
+      prev.map((c) =>
+        c.id === customerId
+          ? { ...c, assignedTechId: techId, serviceDay: dayName }
+          : c
+      )
+    );
+
+    // Show success toast
+    addToast(
+      `Moved ${customer.name} to ${tech?.name || 'technician'} on ${dayName}`,
+      'success'
+    );
   };
 
+  // Calculate total pools for the week
+  const totalPools = customerData.filter(c => c.assignedTechId && c.serviceDay).length;
+  const unscheduledCount = customerData.filter(c => !c.assignedTechId || !c.serviceDay).length;
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" onDragEnd={handleDragEnd}>
+      {/* Toast notifications */}
+      <Toast messages={messages} onDismiss={dismissToast} />
+
       {/* Page header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
@@ -87,7 +215,7 @@ export default function SchedulePage() {
           <div>
             <h2 className="text-lg font-semibold text-slate-900">Week of January 20, 2026</h2>
             <p className="text-sm text-slate-500">
-              {weeklySchedule.technicians.reduce((sum, t) => sum + t.pools.reduce((a, b) => a + b, 0), 0)} pools scheduled across {technicians.length} technicians
+              {totalPools} pools scheduled across {technicians.length} technicians
             </p>
           </div>
         </div>
@@ -155,10 +283,7 @@ export default function SchedulePage() {
                         key={day}
                         className={`px-4 py-3 align-top ${
                           selectedDay === dayIndex ? 'bg-primary-50/30' : ''
-                        } ${isDragOver ? 'bg-primary-100' : ''}`}
-                        onDragOver={(e) => handleDragOver(e, cellId)}
-                        onDragLeave={handleDragLeave}
-                        onDrop={handleDrop}
+                        }`}
                       >
                         <div className="space-y-2">
                           {/* Pool count badge */}
@@ -173,32 +298,30 @@ export default function SchedulePage() {
                             )}
                           </div>
 
-                          {/* Pool cards */}
-                          <div className="space-y-1.5 max-h-32 overflow-y-auto">
-                            {pools.slice(0, 3).map((pool) => (
-                              <div
-                                key={pool.id}
-                                draggable
-                                onDragStart={(e) => handleDragStart(e, pool.id)}
-                                className="group px-2 py-1.5 bg-white border border-slate-200 rounded-md text-xs cursor-move hover:border-primary-300 hover:shadow-sm transition-all"
-                              >
-                                <p className="font-medium text-slate-700 truncate">{pool.name}</p>
-                                <p className="text-slate-400 truncate">${pool.rate}</p>
-                              </div>
-                            ))}
+                          {/* Pool cards with drop zone */}
+                          <DropZone
+                            isDragOver={isDragOver}
+                            isEmpty={pools.length === 0}
+                            onDragOver={(e) => handleDragOver(e, cellId)}
+                            onDragLeave={handleDragLeave}
+                            onDrop={(e) => handleDrop(e, tech.id, dayIndex)}
+                          >
+                            <AnimatePresence mode="popLayout">
+                              {pools.slice(0, 3).map((pool) => (
+                                <PoolCard
+                                  key={pool.id}
+                                  pool={pool}
+                                  onDragStart={handleDragStart}
+                                  isBeingDragged={draggingCustomerId === pool.id}
+                                />
+                              ))}
+                            </AnimatePresence>
                             {pools.length > 3 && (
                               <button className="w-full px-2 py-1 text-xs text-primary-500 hover:text-primary-600 hover:bg-primary-50 rounded">
                                 +{pools.length - 3} more
                               </button>
                             )}
-                          </div>
-
-                          {/* Empty state / drop zone */}
-                          {pools.length === 0 && (
-                            <div className="h-16 border-2 border-dashed border-slate-200 rounded-lg flex items-center justify-center text-xs text-slate-400">
-                              Drop pools here
-                            </div>
-                          )}
+                          </DropZone>
                         </div>
                       </td>
                     );
@@ -221,21 +344,24 @@ export default function SchedulePage() {
                     </div>
                   </div>
                 </td>
-                {daysOfWeek.map((day, dayIndex) => (
-                  <td
-                    key={day}
-                    className={`px-4 py-3 align-top ${selectedDay === dayIndex ? 'bg-amber-100/50' : ''}`}
-                  >
-                    <div className="flex items-center gap-2">
-                      <Badge variant="warning">{weeklySchedule.unscheduled[dayIndex]}</Badge>
-                      {weeklySchedule.unscheduled[dayIndex] > 0 && (
-                        <button className="text-xs text-amber-600 hover:text-amber-700 font-medium">
-                          Assign
-                        </button>
-                      )}
-                    </div>
-                  </td>
-                ))}
+                {daysOfWeek.map((day, dayIndex) => {
+                  const unscheduledForDay = weeklySchedule.unscheduled[dayIndex];
+                  return (
+                    <td
+                      key={day}
+                      className={`px-4 py-3 align-top ${selectedDay === dayIndex ? 'bg-amber-100/50' : ''}`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <Badge variant="warning">{unscheduledForDay}</Badge>
+                        {unscheduledForDay > 0 && (
+                          <button className="text-xs text-amber-600 hover:text-amber-700 font-medium">
+                            Assign
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  );
+                })}
               </tr>
             </tbody>
           </table>
@@ -252,7 +378,14 @@ export default function SchedulePage() {
               </svg>
             </div>
             <div>
-              <p className="text-2xl font-bold text-slate-900">62</p>
+              <motion.p
+                key={totalPools}
+                initial={{ scale: 1.2, color: '#10B981' }}
+                animate={{ scale: 1, color: '#0f172a' }}
+                className="text-2xl font-bold text-slate-900"
+              >
+                {totalPools}
+              </motion.p>
               <p className="text-sm text-slate-500">Total Pools This Week</p>
             </div>
           </div>
@@ -265,7 +398,14 @@ export default function SchedulePage() {
               </svg>
             </div>
             <div>
-              <p className="text-2xl font-bold text-slate-900">12</p>
+              <motion.p
+                key={unscheduledCount}
+                initial={{ scale: 1.2, color: '#F59E0B' }}
+                animate={{ scale: 1, color: '#0f172a' }}
+                className="text-2xl font-bold text-slate-900"
+              >
+                {unscheduledCount}
+              </motion.p>
               <p className="text-sm text-slate-500">Unscheduled Pools</p>
             </div>
           </div>

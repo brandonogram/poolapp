@@ -7,3 +7,4 @@ export { SearchInput } from './search-input';
 export { Avatar } from './avatar';
 export { Card } from './card';
 export { default as Container } from './Container';
+export { Toast, useToast } from './toast';
