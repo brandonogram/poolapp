@@ -4,6 +4,7 @@ module.exports = {
     './app/**/*.{js,ts,jsx,tsx,mdx}',
     './components/**/*.{js,ts,jsx,tsx,mdx}',
   ],
+  darkMode: 'class',
   theme: {
     extend: {
       colors: {
@@ -43,10 +44,31 @@ module.exports = {
           800: '#005566',
           900: '#002A33',
         },
+        // Dark mode surface colors
+        surface: {
+          50: '#f8fafc',
+          100: '#f1f5f9',
+          200: '#e2e8f0',
+          700: '#334155',
+          800: '#1e293b',
+          850: '#172033',
+          900: '#0f172a',
+          950: '#020617',
+        },
       },
       fontFamily: {
         sans: ['var(--font-satoshi)', 'system-ui', 'sans-serif'],
         mono: ['JetBrains Mono', 'monospace'],
+      },
+      // Add animation for focus rings
+      animation: {
+        'focus-ring': 'focus-ring 0.3s ease-out',
+      },
+      keyframes: {
+        'focus-ring': {
+          '0%': { 'box-shadow': '0 0 0 0px rgba(0, 102, 255, 0.4)' },
+          '100%': { 'box-shadow': '0 0 0 3px rgba(0, 102, 255, 0.4)' },
+        },
       },
     },
   },

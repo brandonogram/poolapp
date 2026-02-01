@@ -1,0 +1,113 @@
+{
+  "timestamp": "2026-01-26T18:42:52.484264",
+  "base_url": "https://poolapp-tau.vercel.app",
+  "use_cases": [
+    {
+      "use_case": 1,
+      "name": "First Impression Flow",
+      "status": "PASS",
+      "screenshots": [
+        "/Users/brandonbot/projects/workbench/poolapp/e2e-tests/screenshots/uc1_01_homepage.png",
+        "/Users/brandonbot/projects/workbench/poolapp/e2e-tests/screenshots/uc1_02_convention_page.png",
+        "/Users/brandonbot/projects/workbench/poolapp/e2e-tests/screenshots/uc1_03_cta_clicked.png"
+      ],
+      "notes": "Hero text found: Stop wasting 2 hours every day driving in circles...; Convention link found (leads to pricing); CTA found: Get Started Now",
+      "issues": []
+    },
+    {
+      "use_case": 2,
+      "name": "Convention Signup Flow",
+      "status": "PASS",
+      "screenshots": [
+        "/Users/brandonbot/projects/workbench/poolapp/e2e-tests/screenshots/uc2_01_convention_page.png",
+        "/Users/brandonbot/projects/workbench/poolapp/e2e-tests/screenshots/uc2_02_convention_scrolled.png"
+      ],
+      "notes": "No explicit pricing cards found; Found 10 price displays; CTA found: Start 14-Day Free Trial",
+      "issues": []
+    },
+    {
+      "use_case": 3,
+      "name": "Demo Dashboard Experience",
+      "status": "PASS",
+      "screenshots": [
+        "/Users/brandonbot/projects/workbench/poolapp/e2e-tests/screenshots/uc3_01_login_page.png",
+        "/Users/brandonbot/projects/workbench/poolapp/e2e-tests/screenshots/uc3_02_login_filled.png",
+        "/Users/brandonbot/projects/workbench/poolapp/e2e-tests/screenshots/uc3_03_after_login.png",
+        "/Users/brandonbot/projects/workbench/poolapp/e2e-tests/screenshots/uc3_04_dashboard_content.png",
+        "/Users/brandonbot/projects/workbench/poolapp/e2e-tests/screenshots/uc3_05_dashboard_scrolled.png"
+      ],
+      "notes": "Login form found; Successfully reached dashboard via login; Found 1 stat/metric/card elements; Found 6 dollar amount displays; Found 9 percentage displays; Chemistry-related content found; Tech/utilization content found",
+      "issues": []
+    },
+    {
+      "use_case": 4,
+      "name": "Route Optimization Demo",
+      "status": "PASS",
+      "screenshots": [
+        "/Users/brandonbot/projects/workbench/poolapp/e2e-tests/screenshots/uc4_01_routes_page.png",
+        "/Users/brandonbot/projects/workbench/poolapp/e2e-tests/screenshots/uc4_02_routes_scrolled.png",
+        "/Users/brandonbot/projects/workbench/poolapp/e2e-tests/screenshots/uc4_03_routes_bottom.png"
+      ],
+      "notes": "Before/after comparison elements found; Optimization text found; Found 12 dollar amount displays; Time/distance metrics found; Map/route visualization found; Tech-related content found",
+      "issues": []
+    },
+    {
+      "use_case": 5,
+      "name": "Customer Management Demo",
+      "status": "PARTIAL",
+      "screenshots": [
+        "/Users/brandonbot/projects/workbench/poolapp/e2e-tests/screenshots/uc5_01_customers_page.png",
+        "/Users/brandonbot/projects/workbench/poolapp/e2e-tests/screenshots/uc5_02_customer_detail.png"
+      ],
+      "notes": "Chemistry alert indicators found; Customer clicked (modal or inline detail)",
+      "issues": [
+        "No customer list visible"
+      ]
+    },
+    {
+      "use_case": 6,
+      "name": "Invoice Demo",
+      "status": "PASS",
+      "screenshots": [
+        "/Users/brandonbot/projects/workbench/poolapp/e2e-tests/screenshots/uc6_01_invoices_page.png",
+        "/Users/brandonbot/projects/workbench/poolapp/e2e-tests/screenshots/uc6_02_invoices_scrolled.png"
+      ],
+      "notes": "Found 58 payment status elements; Found 32 dollar amount displays; Found 15 invoice rows; 'Get paid faster' value proposition found",
+      "issues": []
+    },
+    {
+      "use_case": 7,
+      "name": "Mobile Experience",
+      "status": "PARTIAL",
+      "screenshots": [
+        "/Users/brandonbot/projects/workbench/poolapp/e2e-tests/screenshots/uc7_01_mobile_homepage.png",
+        "/Users/brandonbot/projects/workbench/poolapp/e2e-tests/screenshots/uc7_03_mobile_dashboard.png",
+        "/Users/brandonbot/projects/workbench/poolapp/e2e-tests/screenshots/uc7_04_mobile_routes.png",
+        "/Users/brandonbot/projects/workbench/poolapp/e2e-tests/screenshots/uc7_05_mobile_convention.png"
+      ],
+      "notes": "Mobile pages rendered successfully",
+      "issues": [
+        "4 buttons may be too small for touch"
+      ]
+    },
+    {
+      "use_case": 8,
+      "name": "QR Code Flow",
+      "status": "PARTIAL",
+      "screenshots": [
+        "/Users/brandonbot/projects/workbench/poolapp/e2e-tests/screenshots/uc8_01_qr_page.png",
+        "/Users/brandonbot/projects/workbench/poolapp/e2e-tests/screenshots/uc8_02_qr_scrolled.png"
+      ],
+      "notes": "Convention reference found on QR page",
+      "issues": [
+        "No QR code visible on page"
+      ]
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "partial": 3,
+    "failed": 0,
+    "total": 8
+  }
+}

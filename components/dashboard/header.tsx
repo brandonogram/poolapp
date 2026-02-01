@@ -1,7 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Avatar } from '@/components/ui';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
+import { AccessibilitySettings } from '@/components/ui/accessibility-settings';
 
 interface HeaderProps {
   onMenuClick: () => void;
@@ -10,6 +12,8 @@ interface HeaderProps {
 export function Header({ onMenuClick }: HeaderProps) {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
+  const notificationRef = useRef<HTMLDivElement>(null);
+  const profileRef = useRef<HTMLDivElement>(null);
 
   const notifications = [
     {
@@ -37,22 +41,51 @@ export function Header({ onMenuClick }: HeaderProps) {
 
   const unreadCount = notifications.filter((n) => n.unread).length;
 
+  // Close dropdowns on outside click
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (notificationRef.current && !notificationRef.current.contains(event.target as Node)) {
+        setShowNotifications(false);
+      }
+      if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
+        setShowProfile(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Handle escape key to close dropdowns
+  useEffect(() => {
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setShowNotifications(false);
+        setShowProfile(false);
+      }
+    };
+
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, []);
+
   return (
-    <header className="sticky top-0 z-30 bg-white border-b border-slate-200">
+    <header className="sticky top-0 z-30 bg-white dark:bg-surface-900 border-b border-slate-200 dark:border-surface-700 transition-colors">
       <div className="flex items-center justify-between h-16 px-4 sm:px-6">
         {/* Left side - Mobile menu button + Company name */}
         <div className="flex items-center gap-4">
           <button
             onClick={onMenuClick}
-            className="p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg lg:hidden"
+            className="p-2 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-surface-800 rounded-lg lg:hidden transition-colors"
+            aria-label="Open navigation menu"
           >
-            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
             </svg>
           </button>
           <div className="hidden sm:block">
-            <h2 className="text-lg font-semibold text-navy-500">Aqua Pro Pool Services</h2>
-            <p className="text-xs text-slate-500">Phoenix Metro Area</p>
+            <h2 className="text-lg font-semibold text-navy-500 dark:text-slate-100">Aqua Pro Pool Services</h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400">Phoenix Metro Area</p>
           </div>
         </div>
 
@@ -60,16 +93,19 @@ export function Header({ onMenuClick }: HeaderProps) {
         <div className="flex items-center gap-2 sm:gap-4">
           {/* Search - hidden on mobile */}
           <div className="hidden md:block relative">
+            <label htmlFor="header-search" className="sr-only">Search customers and routes</label>
             <input
+              id="header-search"
               type="search"
               placeholder="Search customers, routes..."
-              className="w-64 pl-10 pr-4 py-2 text-sm text-slate-900 placeholder:text-slate-400 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              className="w-64 pl-10 pr-4 py-2 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 bg-slate-50 dark:bg-surface-800 border border-slate-200 dark:border-surface-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 focus:border-primary-500 dark:focus:border-primary-400 transition-colors"
             />
             <svg
-              className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"
+              className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-slate-500"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
+              aria-hidden="true"
             >
               <path
                 strokeLinecap="round"
@@ -81,8 +117,8 @@ export function Header({ onMenuClick }: HeaderProps) {
           </div>
 
           {/* Today's Date */}
-          <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-slate-50 rounded-lg">
-            <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-slate-50 dark:bg-surface-800 rounded-lg">
+            <svg className="w-4 h-4 text-slate-400 dark:text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -90,21 +126,30 @@ export function Header({ onMenuClick }: HeaderProps) {
                 d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
               />
             </svg>
-            <span className="text-sm font-medium text-slate-600">
+            <span className="text-sm font-medium text-slate-600 dark:text-slate-300">
               {new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
             </span>
           </div>
 
+          {/* Theme Toggle */}
+          <ThemeToggle />
+
+          {/* Accessibility Settings */}
+          <AccessibilitySettings />
+
           {/* Notifications */}
-          <div className="relative">
+          <div className="relative" ref={notificationRef}>
             <button
               onClick={() => {
                 setShowNotifications(!showNotifications);
                 setShowProfile(false);
               }}
-              className="relative p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg"
+              className="relative p-2 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-surface-800 rounded-lg transition-colors"
+              aria-label={`Notifications${unreadCount > 0 ? `, ${unreadCount} unread` : ''}`}
+              aria-haspopup="menu"
+              aria-expanded={showNotifications}
             >
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -113,7 +158,7 @@ export function Header({ onMenuClick }: HeaderProps) {
                 />
               </svg>
               {unreadCount > 0 && (
-                <span className="absolute top-1 right-1 w-4 h-4 text-xs font-medium text-white bg-red-500 rounded-full flex items-center justify-center">
+                <span className="absolute top-1 right-1 w-4 h-4 text-xs font-medium text-white bg-red-500 rounded-full flex items-center justify-center" aria-hidden="true">
                   {unreadCount}
                 </span>
               )}
@@ -121,31 +166,39 @@ export function Header({ onMenuClick }: HeaderProps) {
 
             {/* Notifications dropdown */}
             {showNotifications && (
-              <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden">
-                <div className="px-4 py-3 border-b border-slate-100">
-                  <h3 className="text-sm font-semibold text-slate-900">Notifications</h3>
+              <div
+                className="absolute right-0 mt-2 w-80 bg-white dark:bg-surface-800 rounded-xl shadow-lg border border-slate-200 dark:border-surface-700 overflow-hidden z-50"
+                role="menu"
+                aria-label="Notifications"
+              >
+                <div className="px-4 py-3 border-b border-slate-100 dark:border-surface-700">
+                  <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Notifications</h3>
                 </div>
-                <div className="max-h-96 overflow-y-auto">
+                <div className="max-h-96 overflow-y-auto" role="list">
                   {notifications.map((notification) => (
                     <div
                       key={notification.id}
-                      className={`px-4 py-3 hover:bg-slate-50 cursor-pointer ${notification.unread ? 'bg-primary-50/50' : ''}`}
+                      className={`px-4 py-3 hover:bg-slate-50 dark:hover:bg-surface-700 cursor-pointer transition-colors ${
+                        notification.unread ? 'bg-primary-50/50 dark:bg-primary-900/20' : ''
+                      }`}
+                      role="listitem"
+                      tabIndex={0}
                     >
                       <div className="flex items-start gap-3">
                         {notification.unread && (
-                          <span className="mt-1.5 w-2 h-2 bg-primary-500 rounded-full flex-shrink-0" />
+                          <span className="mt-1.5 w-2 h-2 bg-primary-500 rounded-full flex-shrink-0" aria-label="Unread" />
                         )}
                         <div className={notification.unread ? '' : 'ml-5'}>
-                          <p className="text-sm font-medium text-slate-900">{notification.title}</p>
-                          <p className="text-sm text-slate-500">{notification.message}</p>
-                          <p className="mt-1 text-xs text-slate-400">{notification.time}</p>
+                          <p className="text-sm font-medium text-slate-900 dark:text-slate-100">{notification.title}</p>
+                          <p className="text-sm text-slate-500 dark:text-slate-400">{notification.message}</p>
+                          <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">{notification.time}</p>
                         </div>
                       </div>
                     </div>
                   ))}
                 </div>
-                <div className="px-4 py-3 border-t border-slate-100">
-                  <button className="w-full text-center text-sm font-medium text-primary-500 hover:text-primary-600">
+                <div className="px-4 py-3 border-t border-slate-100 dark:border-surface-700">
+                  <button className="w-full text-center text-sm font-medium text-primary-500 dark:text-primary-400 hover:text-primary-600 dark:hover:text-primary-300 transition-colors">
                     View all notifications
                   </button>
                 </div>
@@ -154,46 +207,55 @@ export function Header({ onMenuClick }: HeaderProps) {
           </div>
 
           {/* Profile */}
-          <div className="relative">
+          <div className="relative" ref={profileRef}>
             <button
               onClick={() => {
                 setShowProfile(!showProfile);
                 setShowNotifications(false);
               }}
-              className="flex items-center gap-2 p-1.5 hover:bg-slate-100 rounded-lg"
+              className="flex items-center gap-2 p-1.5 hover:bg-slate-100 dark:hover:bg-surface-800 rounded-lg transition-colors"
+              aria-label="User menu"
+              aria-haspopup="menu"
+              aria-expanded={showProfile}
             >
               <Avatar name="John Smith" size="sm" />
               <div className="hidden sm:block text-left">
-                <p className="text-sm font-medium text-slate-700">John Smith</p>
-                <p className="text-xs text-slate-500">Owner</p>
+                <p className="text-sm font-medium text-slate-700 dark:text-slate-200">John Smith</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">Owner</p>
               </div>
-              <svg className="hidden sm:block w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="hidden sm:block w-4 h-4 text-slate-400 dark:text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
               </svg>
             </button>
 
             {/* Profile dropdown */}
             {showProfile && (
-              <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden">
-                <div className="px-4 py-3 border-b border-slate-100">
-                  <p className="text-sm font-medium text-slate-900">John Smith</p>
-                  <p className="text-xs text-slate-500">john@aquapro.com</p>
+              <div
+                className="absolute right-0 mt-2 w-56 bg-white dark:bg-surface-800 rounded-xl shadow-lg border border-slate-200 dark:border-surface-700 overflow-hidden z-50"
+                role="menu"
+                aria-label="User menu"
+              >
+                <div className="px-4 py-3 border-b border-slate-100 dark:border-surface-700">
+                  <p className="text-sm font-medium text-slate-900 dark:text-slate-100">John Smith</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">john@aquapro.com</p>
                 </div>
-                <div className="py-1">
+                <div className="py-1" role="group">
                   <a
                     href="#"
-                    className="flex items-center gap-3 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
+                    className="flex items-center gap-3 px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-surface-700 transition-colors"
+                    role="menuitem"
                   >
-                    <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg className="w-4 h-4 text-slate-400 dark:text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>
                     Your Profile
                   </a>
                   <a
                     href="#"
-                    className="flex items-center gap-3 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
+                    className="flex items-center gap-3 px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-surface-700 transition-colors"
+                    role="menuitem"
                   >
-                    <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg className="w-4 h-4 text-slate-400 dark:text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                     </svg>
@@ -201,20 +263,22 @@ export function Header({ onMenuClick }: HeaderProps) {
                   </a>
                   <a
                     href="#"
-                    className="flex items-center gap-3 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
+                    className="flex items-center gap-3 px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-surface-700 transition-colors"
+                    role="menuitem"
                   >
-                    <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg className="w-4 h-4 text-slate-400 dark:text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                     Help & Support
                   </a>
                 </div>
-                <div className="py-1 border-t border-slate-100">
+                <div className="py-1 border-t border-slate-100 dark:border-surface-700" role="group">
                   <a
                     href="#"
-                    className="flex items-center gap-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                    className="flex items-center gap-3 px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                    role="menuitem"
                   >
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                     </svg>
                     Sign out

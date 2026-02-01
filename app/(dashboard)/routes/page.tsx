@@ -1,604 +1,662 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Button, Badge, Card, Avatar, ProgressBar } from '@/components/ui';
-import { todayRoutes, technicians, getTechnicianById } from '@/lib/mock-data';
+import { Button, Badge, Card } from '@/components/ui';
+import { useRoutes } from '@/lib/routes-context';
+import { AddStopModal, StopCard } from '@/components/routes';
 
-interface RouteStop {
-  id: string;
-  order: number;
-  customerId: string;
-  customerName: string;
-  address: string;
-  status: string;
-  estimatedArrival: string;
-  estimatedDuration: number;
-}
+const WORKING_DAYS_PER_WEEK = 5;
+const WEEKS_PER_YEAR = 52;
 
 export default function RoutesPage() {
-  const [selectedTech, setSelectedTech] = useState<string>('tech-1');
-  const [isOptimizing, setIsOptimizing] = useState(false);
-  const [selectedStop, setSelectedStop] = useState<RouteStop | null>(null);
-  const [serviceNotes, setServiceNotes] = useState('');
-  const [chemistryReadings, setChemistryReadings] = useState({
-    chlorine: '',
-    ph: '',
-    alkalinity: '',
-    calcium: '',
-  });
+  const [isClient, setIsClient] = useState(false);
 
-  const selectedRoute = todayRoutes.find((r) => r.technicianId === selectedTech);
-  const tech = getTechnicianById(selectedTech);
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
-  const handleOptimize = () => {
-    setIsOptimizing(true);
-    setTimeout(() => setIsOptimizing(false), 2000);
-  };
+  if (!isClient) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
+      </div>
+    );
+  }
 
-  const handleStopClick = (stop: RouteStop) => {
-    setSelectedStop(stop);
-    setServiceNotes('');
-    setChemistryReadings({ chlorine: '', ph: '', alkalinity: '', calcium: '' });
-  };
+  return <RoutesPageContent />;
+}
 
-  const handleCloseModal = () => {
-    setSelectedStop(null);
-  };
+function RoutesPageContent() {
+  const { routes, getTotalSavings, reorderStops } = useRoutes();
+  const [selectedTech, setSelectedTech] = useState<string | null>(null);
+  const [showBeforeAfter, setShowBeforeAfter] = useState<'after' | 'before'>('after');
+  const [addStopModal, setAddStopModal] = useState<{ isOpen: boolean; techId: string; techName: string } | null>(null);
 
-  const handleSaveService = () => {
-    // In a real app, this would save to the database
-    alert(`Service logged for ${selectedStop?.customerName}!\n\nNotes: ${serviceNotes || 'None'}\nChlorine: ${chemistryReadings.chlorine || 'N/A'}\npH: ${chemistryReadings.ph || 'N/A'}`);
-    setSelectedStop(null);
-  };
+  const savings = getTotalSavings();
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return 'bg-green-500';
-      case 'in-progress':
-        return 'bg-primary-500';
-      case 'pending':
-        return 'bg-slate-300';
-      case 'skipped':
-        return 'bg-red-500';
-      default:
-        return 'bg-slate-300';
-    }
-  };
+  // Calculate totals from actual routes
+  const totalOriginalDistance = routes.reduce((sum, r) => sum + r.totalDistance, 0);
+  const totalOptimizedDistance = routes.reduce((sum, r) => sum + r.optimizedDistance, 0);
+  const totalMilesSaved = Math.round((totalOriginalDistance - totalOptimizedDistance) * 10) / 10;
+  const totalTimeSavedHours = Math.round((savings.timeSaved / 60) * 10) / 10;
+  const dailyFuelSavings = Math.round(savings.fuelSaved);
+  const weeklySavingsAmount = dailyFuelSavings * WORKING_DAYS_PER_WEEK;
+  const yearlySavingsAmount = weeklySavingsAmount * WEEKS_PER_YEAR;
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return <Badge variant="success">Done</Badge>;
-      case 'in-progress':
-        return <Badge variant="primary" dot>Current</Badge>;
-      case 'pending':
-        return <Badge variant="default">Pending</Badge>;
-      case 'skipped':
-        return <Badge variant="danger">Skipped</Badge>;
-      default:
-        return null;
-    }
+  const totalStops = routes.reduce((sum, r) => sum + r.stops.length, 0);
+  const completedStops = routes.reduce((sum, r) => sum + r.stops.filter(s => s.status === 'completed').length, 0);
+  const optimizationScore = totalStops > 0 ? Math.round((totalOptimizedDistance / totalOriginalDistance) * 100) : 100;
+  const efficiencyScore = 100 - optimizationScore + 75; // Higher is better
+
+  const selectedTechData = selectedTech
+    ? routes.find(r => r.technicianId === selectedTech)
+    : null;
+
+  const handleMoveStop = (techId: string, fromIndex: number, direction: 'up' | 'down') => {
+    const toIndex = direction === 'up' ? fromIndex - 1 : fromIndex + 1;
+    reorderStops(techId, fromIndex, toIndex);
   };
 
   return (
     <div className="space-y-6">
-      {/* Page header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-navy-500">Routes</h1>
-          <p className="mt-1 text-sm text-slate-500">
-            View and optimize today's service routes. Click on a stop to log service.
-          </p>
+      {/* Hero Section - Big Savings Display */}
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="relative overflow-hidden bg-gradient-to-br from-green-600 via-green-500 to-emerald-600 rounded-2xl p-6 md:p-8 text-white"
+      >
+        {/* Background pattern */}
+        <div className="absolute inset-0 opacity-10">
+          <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+            <defs>
+              <pattern id="heroGrid" width="10" height="10" patternUnits="userSpaceOnUse">
+                <circle cx="5" cy="5" r="1" fill="white" />
+              </pattern>
+            </defs>
+            <rect width="100" height="100" fill="url(#heroGrid)" />
+          </svg>
         </div>
-        <div className="flex gap-3">
-          <select
-            value={selectedTech}
-            onChange={(e) => setSelectedTech(e.target.value)}
-            className="px-4 py-2 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-slate-900"
-          >
-            {technicians.map((tech) => (
-              <option key={tech.id} value={tech.id}>
-                {tech.name}
-              </option>
-            ))}
-          </select>
-          <Button onClick={handleOptimize} loading={isOptimizing}>
-            <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-            </svg>
-            {isOptimizing ? 'Optimizing...' : 'Optimize Route'}
-          </Button>
-        </div>
-      </div>
 
-      {/* Stats comparison */}
-      {selectedRoute && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card padding="sm">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-lg bg-slate-100 flex items-center justify-center">
-                <svg className="w-6 h-6 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
-                </svg>
-              </div>
-              <div>
-                <p className="text-sm text-slate-500">Original Distance</p>
-                <p className="text-xl font-bold text-slate-400 line-through">
-                  {selectedRoute.totalDistance} mi
-                </p>
-              </div>
-            </div>
-          </Card>
-          <Card padding="sm">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-lg bg-green-50 flex items-center justify-center">
-                <svg className="w-6 h-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
-                </svg>
-              </div>
-              <div>
-                <p className="text-sm text-slate-500">Optimized Distance</p>
-                <p className="text-xl font-bold text-green-600">
-                  {selectedRoute.optimizedDistance} mi
-                </p>
-              </div>
-            </div>
-          </Card>
-          <Card padding="sm">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-lg bg-primary-50 flex items-center justify-center">
-                <svg className="w-6 h-6 text-primary-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <div>
-                <p className="text-sm text-slate-500">Time Saved</p>
-                <p className="text-xl font-bold text-primary-600">
-                  {Math.round((selectedRoute.estimatedTime - selectedRoute.optimizedTime) / 60 * 10) / 10} hrs
-                </p>
-              </div>
-            </div>
-          </Card>
-          <Card padding="sm">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-lg bg-amber-50 flex items-center justify-center">
-                <svg className="w-6 h-6 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <div>
-                <p className="text-sm text-slate-500">Fuel Saved</p>
-                <p className="text-xl font-bold text-amber-600">
-                  ${Math.round((selectedRoute.totalDistance - selectedRoute.optimizedDistance) * 0.58 * 10) / 10}
-                </p>
-              </div>
-            </div>
-          </Card>
-        </div>
-      )}
-
-      {/* Main content */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Map */}
-        <Card title="Today's Route" subtitle={tech?.name}>
-          <div className="h-[500px] bg-gradient-to-br from-slate-100 to-slate-200 rounded-lg relative overflow-hidden">
-            {/* Grid background */}
-            <div className="absolute inset-0 opacity-30">
-              <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
-                <defs>
-                  <pattern id="routeGrid" width="10" height="10" patternUnits="userSpaceOnUse">
-                    <path d="M 10 0 L 0 0 0 10" fill="none" stroke="#94a3b8" strokeWidth="0.5" />
-                  </pattern>
-                </defs>
-                <rect width="100" height="100" fill="url(#routeGrid)" />
-              </svg>
-            </div>
-
-            {/* Route visualization */}
-            {selectedRoute && (
-              <svg className="absolute inset-0 w-full h-full" viewBox="0 0 500 500">
-                {/* Route path */}
-                <path
-                  d="M 50 400 C 100 350 120 300 180 280 C 240 260 260 200 300 180 C 340 160 380 120 420 140 C 460 160 450 220 400 260 C 350 300 300 320 280 380 C 260 440 200 450 150 420"
-                  fill="none"
-                  stroke="#0066FF"
-                  strokeWidth="4"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="opacity-70"
-                  strokeDasharray="10,5"
-                />
-
-                {/* Stop markers */}
-                {selectedRoute.stops.map((stop, index) => {
-                  const positions = [
-                    { x: 50, y: 400 },
-                    { x: 120, y: 300 },
-                    { x: 180, y: 280 },
-                    { x: 260, y: 200 },
-                    { x: 300, y: 180 },
-                    { x: 380, y: 120 },
-                    { x: 420, y: 140 },
-                    { x: 400, y: 260 },
-                    { x: 280, y: 380 },
-                    { x: 150, y: 420 },
-                  ];
-                  const pos = positions[index % positions.length];
-
-                  return (
-                    <g
-                      key={stop.id}
-                      className="cursor-pointer"
-                      onClick={() => handleStopClick(stop as RouteStop)}
-                    >
-                      <circle
-                        cx={pos.x}
-                        cy={pos.y + 3}
-                        r="18"
-                        fill="rgba(0,0,0,0.1)"
-                      />
-                      <circle
-                        cx={pos.x}
-                        cy={pos.y}
-                        r="16"
-                        fill="white"
-                        stroke={
-                          stop.status === 'completed'
-                            ? '#10B981'
-                            : stop.status === 'in-progress'
-                            ? '#0066FF'
-                            : '#94a3b8'
-                        }
-                        strokeWidth="3"
-                        className="hover:stroke-[4px] transition-all"
-                      />
-                      <text
-                        x={pos.x}
-                        y={pos.y + 5}
-                        textAnchor="middle"
-                        fontSize="12"
-                        fontWeight="bold"
-                        fill={
-                          stop.status === 'completed'
-                            ? '#10B981'
-                            : stop.status === 'in-progress'
-                            ? '#0066FF'
-                            : '#64748b'
-                        }
-                      >
-                        {stop.order}
-                      </text>
-                    </g>
-                  );
-                })}
-
-                {/* Start marker */}
-                <g>
-                  <circle cx="50" cy="450" r="12" fill="#001B44" />
-                  <text x="50" y="454" textAnchor="middle" fontSize="10" fontWeight="bold" fill="white">
-                    S
-                  </text>
-                </g>
-              </svg>
-            )}
-
-            {/* Legend */}
-            <div className="absolute bottom-4 left-4 bg-white/90 backdrop-blur-sm rounded-lg p-3 shadow-sm">
-              <div className="flex items-center gap-4 text-xs">
-                <div className="flex items-center gap-1">
-                  <div className="w-3 h-3 rounded-full bg-green-500" />
-                  <span>Completed</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <div className="w-3 h-3 rounded-full bg-primary-500" />
-                  <span>Current</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <div className="w-3 h-3 rounded-full bg-slate-300" />
-                  <span>Pending</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Hint */}
-            <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm rounded-lg px-3 py-2 shadow-sm">
-              <p className="text-xs text-slate-500">Click a stop to log service</p>
-            </div>
-          </div>
-        </Card>
-
-        {/* Stops list */}
-        <Card
-          title="Route Stops"
-          subtitle={`${selectedRoute?.stops.filter((s) => s.status === 'completed').length || 0} of ${selectedRoute?.stops.length || 0} completed`}
-          action={
-            <Button variant="outline" size="sm">
-              <svg className="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-              </svg>
-              Export
-            </Button>
-          }
-        >
-          <div className="space-y-3 max-h-[440px] overflow-y-auto pr-2">
-            {selectedRoute?.stops.map((stop, index) => (
-              <div
-                key={stop.id}
-                onClick={() => handleStopClick(stop as RouteStop)}
-                className={`relative flex gap-4 p-4 rounded-lg border transition-all cursor-pointer ${
-                  stop.status === 'in-progress'
-                    ? 'border-primary-200 bg-primary-50 hover:border-primary-300'
-                    : stop.status === 'completed'
-                    ? 'border-green-100 bg-green-50/50 hover:border-green-200'
-                    : 'border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300'
-                }`}
-              >
-                {/* Connection line */}
-                {index < (selectedRoute?.stops.length || 0) - 1 && (
-                  <div
-                    className={`absolute left-8 top-full w-0.5 h-3 -translate-x-1/2 ${
-                      stop.status === 'completed' ? 'bg-green-300' : 'bg-slate-200'
-                    }`}
-                  />
-                )}
-
-                {/* Stop number */}
-                <div
-                  className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
-                    stop.status === 'completed'
-                      ? 'bg-green-500 text-white'
-                      : stop.status === 'in-progress'
-                      ? 'bg-primary-500 text-white'
-                      : 'bg-slate-200 text-slate-600'
-                  }`}
-                >
-                  {stop.status === 'completed' ? (
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                  ) : (
-                    stop.order
-                  )}
-                </div>
-
-                {/* Stop info */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <p className="font-medium text-slate-900">{stop.customerName}</p>
-                      <p className="text-sm text-slate-500">{stop.address}</p>
-                    </div>
-                    {getStatusBadge(stop.status)}
-                  </div>
-                  <div className="mt-2 flex items-center gap-4 text-sm text-slate-500">
-                    <span className="flex items-center gap-1">
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      {stop.estimatedArrival}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      ~{stop.estimatedDuration} min
-                    </span>
-                  </div>
-                </div>
-
-                {/* Arrow indicator */}
-                <div className="flex-shrink-0 flex items-center">
-                  <svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                </div>
-              </div>
-            ))}
-          </div>
-        </Card>
-      </div>
-
-      {/* Bottom optimization summary */}
-      <Card>
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-xl bg-green-100 flex items-center justify-center">
-              <svg className="w-7 h-7 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
+        <div className="relative z-10">
+          {/* Header */}
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
             <div>
-              <h3 className="text-lg font-semibold text-slate-900">Route Optimized</h3>
-              <p className="text-sm text-slate-500">
-                This route has been optimized, saving{' '}
-                <span className="font-semibold text-green-600">
-                  {selectedRoute ? selectedRoute.totalDistance - selectedRoute.optimizedDistance : 0} miles
-                </span>{' '}
-                and{' '}
-                <span className="font-semibold text-green-600">
-                  {selectedRoute ? Math.round((selectedRoute.estimatedTime - selectedRoute.optimizedTime) / 60 * 10) / 10 : 0} hours
-                </span>{' '}
-                today.
-              </p>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-green-100 text-sm font-medium">Today's Route Optimization</span>
+                <Badge variant="success" className="bg-white/20 text-white border-0">
+                  Live
+                </Badge>
+              </div>
+              <h1 className="text-2xl md:text-3xl font-bold">You're Saving Money Today</h1>
+            </div>
+
+            {/* Optimization Score */}
+            <div className="flex items-center gap-4 bg-white/10 rounded-xl p-4 backdrop-blur-sm">
+              <div className="relative w-16 h-16">
+                <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
+                  <path
+                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                    fill="none"
+                    stroke="rgba(255,255,255,0.2)"
+                    strokeWidth="3"
+                  />
+                  <path
+                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                    fill="none"
+                    stroke="white"
+                    strokeWidth="3"
+                    strokeDasharray={`${Math.min(efficiencyScore, 100)}, 100`}
+                    strokeLinecap="round"
+                  />
+                </svg>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="text-lg font-bold">{Math.min(efficiencyScore, 99)}%</span>
+                </div>
+              </div>
+              <div>
+                <p className="text-white/80 text-sm">Optimization</p>
+                <p className="font-semibold">Score</p>
+              </div>
             </div>
           </div>
-          <div className="flex gap-2">
-            <Button variant="outline">
-              <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-              </svg>
-              Share Route
-            </Button>
-            <Button>
-              <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
-              Open in Maps
-            </Button>
+
+          {/* Big Numbers - Main Selling Point */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.1 }}
+              className="bg-white/10 backdrop-blur-sm rounded-xl p-4 md:p-5"
+            >
+              <p className="text-green-100 text-sm mb-1">Miles Saved Today</p>
+              <p className="text-3xl md:text-4xl font-bold">{totalMilesSaved || 0}</p>
+              <p className="text-green-200 text-sm mt-1">miles less driving</p>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.15 }}
+              className="bg-white/10 backdrop-blur-sm rounded-xl p-4 md:p-5"
+            >
+              <p className="text-green-100 text-sm mb-1">Time Saved Today</p>
+              <p className="text-3xl md:text-4xl font-bold">{totalTimeSavedHours || 0}</p>
+              <p className="text-green-200 text-sm mt-1">hours back</p>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.2 }}
+              className="bg-white/10 backdrop-blur-sm rounded-xl p-4 md:p-5"
+            >
+              <p className="text-green-100 text-sm mb-1">Fuel Saved Today</p>
+              <p className="text-3xl md:text-4xl font-bold">${dailyFuelSavings || 0}</p>
+              <p className="text-green-200 text-sm mt-1">in fuel costs</p>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.25 }}
+              className="bg-white/15 backdrop-blur-sm rounded-xl p-4 md:p-5 border border-white/20"
+            >
+              <p className="text-green-100 text-sm mb-1">Yearly Projection</p>
+              <p className="text-3xl md:text-4xl font-bold">${yearlySavingsAmount.toLocaleString()}</p>
+              <p className="text-green-200 text-sm mt-1">${weeklySavingsAmount}/week</p>
+            </motion.div>
           </div>
         </div>
-      </Card>
+      </motion.div>
 
-      {/* Service Log Modal */}
-      <AnimatePresence>
-        {selectedStop && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50"
-            onClick={handleCloseModal}
-          >
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="bg-white rounded-2xl shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto"
-              onClick={(e) => e.stopPropagation()}
-            >
-              {/* Header */}
-              <div className="p-6 border-b border-slate-200">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <h2 className="text-xl font-bold text-slate-900">{selectedStop.customerName}</h2>
-                    <p className="text-sm text-slate-500 mt-1">{selectedStop.address}</p>
-                  </div>
+      {/* Before/After Comparison Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Visual Route Comparison */}
+        <motion.div
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.3 }}
+        >
+          <Card>
+            <div className="p-5 border-b border-slate-100">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-lg font-semibold text-slate-900">Route Comparison</h2>
+                  <p className="text-sm text-slate-500 mt-0.5">{totalStops} stops total</p>
+                </div>
+                <div className="flex bg-slate-100 rounded-lg p-1 gap-1">
                   <button
-                    onClick={handleCloseModal}
-                    className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
+                    onClick={() => setShowBeforeAfter('before')}
+                    className={`px-5 py-2.5 rounded-md text-sm font-medium transition-all min-h-[44px] ${
+                      showBeforeAfter === 'before'
+                        ? 'bg-white text-slate-900 shadow-sm'
+                        : 'text-slate-600 hover:text-slate-900'
+                    }`}
                   >
-                    <svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
+                    Before
+                  </button>
+                  <button
+                    onClick={() => setShowBeforeAfter('after')}
+                    className={`px-5 py-2.5 rounded-md text-sm font-medium transition-all min-h-[44px] ${
+                      showBeforeAfter === 'after'
+                        ? 'bg-white text-slate-900 shadow-sm'
+                        : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    After
                   </button>
                 </div>
-                <div className="flex items-center gap-3 mt-4">
-                  {getStatusBadge(selectedStop.status)}
-                  <span className="text-sm text-slate-500">Stop #{selectedStop.order}</span>
-                  <span className="text-sm text-slate-500">ETA: {selectedStop.estimatedArrival}</span>
+              </div>
+            </div>
+
+            <div className="p-5">
+              <div className="relative h-[300px] bg-gradient-to-br from-slate-50 to-slate-100 rounded-xl overflow-hidden">
+                {/* Grid background */}
+                <div className="absolute inset-0 opacity-40">
+                  <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+                    <defs>
+                      <pattern id="mapGrid" width="5" height="5" patternUnits="userSpaceOnUse">
+                        <path d="M 5 0 L 0 0 0 5" fill="none" stroke="#cbd5e1" strokeWidth="0.3" />
+                      </pattern>
+                    </defs>
+                    <rect width="100" height="100" fill="url(#mapGrid)" />
+                  </svg>
+                </div>
+
+                {/* Route visualization */}
+                <svg className="absolute inset-0 w-full h-full" viewBox="0 0 400 300">
+                  <AnimatePresence mode="wait">
+                    {showBeforeAfter === 'before' ? (
+                      <motion.g
+                        key="before"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.3 }}
+                      >
+                        {/* Inefficient route - zigzag pattern */}
+                        <path
+                          d="M 40 250 L 350 50 L 80 80 L 320 220 L 60 150 L 280 100 L 100 200 L 350 150 L 50 50"
+                          fill="none"
+                          stroke="#EF4444"
+                          strokeWidth="3"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeDasharray="8,4"
+                          opacity="0.7"
+                        />
+                        {/* Stop markers */}
+                        {[
+                          { x: 40, y: 250 }, { x: 350, y: 50 }, { x: 80, y: 80 },
+                          { x: 320, y: 220 }, { x: 60, y: 150 }, { x: 280, y: 100 },
+                          { x: 100, y: 200 }, { x: 350, y: 150 }, { x: 50, y: 50 }
+                        ].slice(0, Math.min(totalStops, 9)).map((pos, i) => (
+                          <g key={i}>
+                            <circle cx={pos.x} cy={pos.y} r="12" fill="white" stroke="#EF4444" strokeWidth="2" />
+                            <text x={pos.x} y={pos.y + 4} textAnchor="middle" fontSize="10" fontWeight="bold" fill="#EF4444">
+                              {i + 1}
+                            </text>
+                          </g>
+                        ))}
+                      </motion.g>
+                    ) : (
+                      <motion.g
+                        key="after"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.3 }}
+                      >
+                        {/* Optimized route - efficient loop */}
+                        <path
+                          d="M 40 250 C 60 200 60 150 50 50 C 70 60 80 70 80 80 C 140 85 200 90 280 100 C 310 120 340 140 350 150 C 355 100 355 70 350 50 C 340 130 330 180 320 220 C 250 215 180 210 100 200 C 75 180 55 160 60 150"
+                          fill="none"
+                          stroke="#10B981"
+                          strokeWidth="3"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                        {/* Optimized stop markers */}
+                        {[
+                          { x: 40, y: 250 }, { x: 50, y: 50 }, { x: 80, y: 80 },
+                          { x: 280, y: 100 }, { x: 350, y: 150 }, { x: 350, y: 50 },
+                          { x: 320, y: 220 }, { x: 100, y: 200 }, { x: 60, y: 150 }
+                        ].slice(0, Math.min(totalStops, 9)).map((pos, i) => (
+                          <g key={i}>
+                            <circle cx={pos.x} cy={pos.y} r="12" fill="white" stroke="#10B981" strokeWidth="2" />
+                            <text x={pos.x} y={pos.y + 4} textAnchor="middle" fontSize="10" fontWeight="bold" fill="#10B981">
+                              {i + 1}
+                            </text>
+                          </g>
+                        ))}
+                      </motion.g>
+                    )}
+                  </AnimatePresence>
+
+                  {/* Start marker */}
+                  <g>
+                    <circle cx="40" cy="280" r="10" fill="#1E40AF" />
+                    <text x="40" y="284" textAnchor="middle" fontSize="9" fontWeight="bold" fill="white">S</text>
+                  </g>
+                </svg>
+
+                {/* Distance overlay */}
+                <div className={`absolute top-4 left-4 px-4 py-2 rounded-lg shadow-lg ${
+                  showBeforeAfter === 'before'
+                    ? 'bg-red-500 text-white'
+                    : 'bg-green-500 text-white'
+                }`}>
+                  <p className="text-xs opacity-90">
+                    {showBeforeAfter === 'before' ? 'Original Route' : 'Optimized Route'}
+                  </p>
+                  <p className="text-xl font-bold">
+                    {showBeforeAfter === 'before' ? Math.round(totalOriginalDistance) : Math.round(totalOptimizedDistance)} miles
+                  </p>
+                </div>
+
+                {/* Savings badge */}
+                {showBeforeAfter === 'after' && totalMilesSaved > 0 && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="absolute top-4 right-4 bg-green-100 text-green-700 px-3 py-2 rounded-lg shadow-lg"
+                  >
+                    <p className="text-xs">You're Saving</p>
+                    <p className="text-lg font-bold">-{totalMilesSaved} miles</p>
+                  </motion.div>
+                )}
+              </div>
+
+              {/* Legend */}
+              <div className="flex items-center justify-center gap-6 mt-4 text-sm">
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-0.5 bg-red-500" style={{ borderTop: '3px dashed #EF4444' }}></div>
+                  <span className="text-slate-600">Before: {Math.round(totalOriginalDistance)} mi</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-0.5 bg-green-500"></div>
+                  <span className="text-slate-600">After: {Math.round(totalOptimizedDistance)} mi</span>
+                </div>
+              </div>
+            </div>
+          </Card>
+        </motion.div>
+
+        {/* Savings Breakdown */}
+        <motion.div
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.35 }}
+        >
+          <Card>
+            <div className="p-5 border-b border-slate-100">
+              <h2 className="text-lg font-semibold text-slate-900">Your Savings Breakdown</h2>
+              <p className="text-sm text-slate-500 mt-0.5">See exactly where you're saving</p>
+            </div>
+
+            <div className="p-5 space-y-5">
+              {/* Daily breakdown */}
+              <div className="bg-green-50 rounded-xl p-5">
+                <h3 className="text-sm font-medium text-green-800 mb-4">Today's Impact</h3>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                        <svg className="w-5 h-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                        </svg>
+                      </div>
+                      <div>
+                        <p className="text-sm text-green-900 font-medium">Distance Reduced</p>
+                        <p className="text-xs text-green-600">{Math.round(totalOriginalDistance)} mi to {Math.round(totalOptimizedDistance)} mi</p>
+                      </div>
+                    </div>
+                    <span className="text-xl font-bold text-green-600">-{totalMilesSaved} mi</span>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                        <svg className="w-5 h-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      </div>
+                      <div>
+                        <p className="text-sm text-green-900 font-medium">Time Back</p>
+                        <p className="text-xs text-green-600">More pools or earlier finish</p>
+                      </div>
+                    </div>
+                    <span className="text-xl font-bold text-green-600">+{totalTimeSavedHours} hrs</span>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                        <svg className="w-5 h-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      </div>
+                      <div>
+                        <p className="text-sm text-green-900 font-medium">Fuel Costs</p>
+                        <p className="text-xs text-green-600">At $0.50/mile average</p>
+                      </div>
+                    </div>
+                    <span className="text-xl font-bold text-green-600">-${dailyFuelSavings}</span>
+                  </div>
                 </div>
               </div>
 
-              {/* Service Form */}
-              <div className="p-6 space-y-6">
-                {/* Chemistry Readings */}
-                <div>
-                  <h3 className="text-sm font-semibold text-slate-900 mb-3">Chemistry Readings</h3>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-xs font-medium text-slate-600 mb-1">
-                        Chlorine (ppm)
-                      </label>
-                      <input
-                        type="number"
-                        step="0.1"
-                        value={chemistryReadings.chlorine}
-                        onChange={(e) => setChemistryReadings({ ...chemistryReadings, chlorine: e.target.value })}
-                        placeholder="1.0 - 3.0"
-                        className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white text-slate-900"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-slate-600 mb-1">
-                        pH Level
-                      </label>
-                      <input
-                        type="number"
-                        step="0.1"
-                        value={chemistryReadings.ph}
-                        onChange={(e) => setChemistryReadings({ ...chemistryReadings, ph: e.target.value })}
-                        placeholder="7.2 - 7.6"
-                        className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white text-slate-900"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-slate-600 mb-1">
-                        Alkalinity (ppm)
-                      </label>
-                      <input
-                        type="number"
-                        value={chemistryReadings.alkalinity}
-                        onChange={(e) => setChemistryReadings({ ...chemistryReadings, alkalinity: e.target.value })}
-                        placeholder="80 - 120"
-                        className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white text-slate-900"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-slate-600 mb-1">
-                        Calcium (ppm)
-                      </label>
-                      <input
-                        type="number"
-                        value={chemistryReadings.calcium}
-                        onChange={(e) => setChemistryReadings({ ...chemistryReadings, calcium: e.target.value })}
-                        placeholder="200 - 400"
-                        className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white text-slate-900"
-                      />
-                    </div>
+              {/* Projections */}
+              <div className="bg-slate-50 rounded-xl p-5">
+                <h3 className="text-sm font-medium text-slate-700 mb-4">Projected Savings</h3>
+                <div className="grid grid-cols-3 gap-4 text-center">
+                  <div>
+                    <p className="text-2xl font-bold text-slate-900">${dailyFuelSavings}</p>
+                    <p className="text-xs text-slate-500 mt-1">Per Day</p>
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-green-600">${weeklySavingsAmount}</p>
+                    <p className="text-xs text-slate-500 mt-1">Per Week</p>
+                  </div>
+                  <div className="relative">
+                    <p className="text-2xl font-bold text-green-600">${yearlySavingsAmount.toLocaleString()}</p>
+                    <p className="text-xs text-slate-500 mt-1">Per Year</p>
+                    <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
                   </div>
                 </div>
+              </div>
+            </div>
+          </Card>
+        </motion.div>
+      </div>
 
-                {/* Quick Actions */}
-                <div>
-                  <h3 className="text-sm font-semibold text-slate-900 mb-3">Service Performed</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {['Skimmed', 'Vacuumed', 'Brushed', 'Cleaned Filter', 'Added Chlorine', 'Adjusted pH', 'Emptied Baskets'].map((action) => (
-                      <button
-                        key={action}
-                        className="px-3 py-1.5 text-sm bg-slate-100 hover:bg-primary-100 hover:text-primary-700 rounded-full transition-colors text-slate-700"
-                      >
-                        {action}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Notes */}
-                <div>
-                  <label className="block text-sm font-semibold text-slate-900 mb-2">
-                    Service Notes
-                  </label>
-                  <textarea
-                    value={serviceNotes}
-                    onChange={(e) => setServiceNotes(e.target.value)}
-                    placeholder="Add any notes about the service..."
-                    rows={3}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none bg-white text-slate-900 placeholder:text-slate-400"
+      {/* Per-Tech Routes with CRUD */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.4 }}
+      >
+        <Card>
+          <div className="p-5 border-b border-slate-100">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <h2 className="text-lg font-semibold text-slate-900">Technician Routes</h2>
+                <p className="text-sm text-slate-500 mt-0.5">Manage stops and optimize routes</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="text-sm text-slate-500">
+                  {completedStops} of {totalStops} stops completed
+                </span>
+                <div className="w-32 h-2 bg-slate-100 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-green-500 rounded-full transition-all"
+                    style={{ width: `${totalStops > 0 ? (completedStops / totalStops) * 100 : 0}%` }}
                   />
                 </div>
+              </div>
+            </div>
+          </div>
 
-                {/* Photo Upload */}
-                <div>
-                  <h3 className="text-sm font-semibold text-slate-900 mb-2">Photos</h3>
-                  <div className="border-2 border-dashed border-slate-200 rounded-lg p-6 text-center hover:border-primary-300 transition-colors cursor-pointer">
-                    <svg className="w-8 h-8 text-slate-400 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                    <p className="text-sm text-slate-500">Click to add photos</p>
+          <div className="p-5">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {routes.map((route, index) => (
+                <motion.div
+                  key={route.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.45 + index * 0.05 }}
+                  onClick={() => setSelectedTech(selectedTech === route.technicianId ? null : route.technicianId)}
+                  className={`relative p-5 rounded-xl border-2 cursor-pointer transition-all ${
+                    selectedTech === route.technicianId
+                      ? 'border-green-500 bg-green-50'
+                      : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50'
+                  }`}
+                >
+                  {/* Status badge */}
+                  <div className="absolute top-3 right-3">
+                    {route.stops.every(s => s.status === 'completed') ? (
+                      <Badge variant="success">Done</Badge>
+                    ) : route.stops.some(s => s.status === 'in-progress') ? (
+                      <Badge variant="primary" dot>Active</Badge>
+                    ) : (
+                      <Badge variant="default">Pending</Badge>
+                    )}
                   </div>
-                </div>
-              </div>
 
-              {/* Footer */}
-              <div className="p-6 border-t border-slate-200 bg-slate-50 rounded-b-2xl flex gap-3">
-                <Button variant="outline" onClick={handleCloseModal} fullWidth>
-                  Cancel
-                </Button>
-                <Button onClick={handleSaveService} fullWidth>
+                  {/* Tech info */}
+                  <div className="flex items-center gap-3 mb-4">
+                    <div
+                      className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-lg"
+                      style={{ backgroundColor: route.technicianColor }}
+                    >
+                      {route.technicianName.split(' ').map(n => n[0]).join('')}
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-slate-900">{route.technicianName}</h3>
+                      <p className="text-sm text-slate-500">
+                        {route.stops.filter(s => s.status === 'completed').length}/{route.stops.length} stops
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Progress bar */}
+                  <div className="mb-4">
+                    <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                      <div
+                        className="h-full rounded-full transition-all"
+                        style={{
+                          width: `${route.stops.length > 0 ? (route.stops.filter(s => s.status === 'completed').length / route.stops.length) * 100 : 0}%`,
+                          backgroundColor: route.technicianColor
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Savings for this tech */}
+                  <div className="grid grid-cols-3 gap-2 text-center">
+                    <div className="bg-green-50 rounded-lg py-2 px-1">
+                      <p className="text-lg font-bold text-green-600">-{route.savings.milesSaved}</p>
+                      <p className="text-xs text-green-700">miles</p>
+                    </div>
+                    <div className="bg-green-50 rounded-lg py-2 px-1">
+                      <p className="text-lg font-bold text-green-600">+{Math.round(route.savings.timeSaved / 60 * 10) / 10}h</p>
+                      <p className="text-xs text-green-700">saved</p>
+                    </div>
+                    <div className="bg-green-50 rounded-lg py-2 px-1">
+                      <p className="text-lg font-bold text-green-600">${Math.round(route.savings.fuelSaved)}</p>
+                      <p className="text-xs text-green-700">fuel</p>
+                    </div>
+                  </div>
+
+                  {/* Expanded details */}
+                  <AnimatePresence>
+                    {selectedTech === route.technicianId && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="mt-4 pt-4 border-t border-green-200"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <div className="space-y-2 text-sm mb-4">
+                          <div className="flex justify-between">
+                            <span className="text-slate-600">Original route:</span>
+                            <span className="text-slate-400 line-through">{route.totalDistance} mi</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-slate-600">Optimized route:</span>
+                            <span className="text-green-600 font-medium">{route.optimizedDistance} mi</span>
+                          </div>
+                          <div className="flex justify-between pt-2 border-t border-green-100">
+                            <span className="text-green-700 font-medium">Total saved:</span>
+                            <span className="text-green-600 font-bold">
+                              {route.savings.milesSaved} miles ({route.totalDistance > 0 ? Math.round((route.savings.milesSaved / route.totalDistance) * 100) : 0}%)
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Add Stop Button */}
+                        <Button
+                          onClick={(e: React.MouseEvent) => {
+                            e.stopPropagation();
+                            setAddStopModal({
+                              isOpen: true,
+                              techId: route.technicianId,
+                              techName: route.technicianName,
+                            });
+                          }}
+                          className="w-full bg-green-600 hover:bg-green-700 text-white mb-4"
+                        >
+                          <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                          </svg>
+                          Add Stop
+                        </Button>
+
+                        {/* Stops List */}
+                        <div className="space-y-3 max-h-[400px] overflow-y-auto">
+                          {route.stops.length === 0 ? (
+                            <div className="text-center py-8 text-slate-500">
+                              <svg className="w-12 h-12 mx-auto mb-3 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                              </svg>
+                              <p>No stops on this route</p>
+                              <p className="text-sm">Click "Add Stop" to begin</p>
+                            </div>
+                          ) : (
+                            route.stops.map((stop, stopIndex) => (
+                              <StopCard
+                                key={stop.id}
+                                stop={stop}
+                                technicianId={route.technicianId}
+                                technicianColor={route.technicianColor}
+                                isFirst={stopIndex === 0}
+                                isLast={stopIndex === route.stops.length - 1}
+                                onMoveUp={() => handleMoveStop(route.technicianId, stopIndex, 'up')}
+                                onMoveDown={() => handleMoveStop(route.technicianId, stopIndex, 'down')}
+                              />
+                            ))
+                          )}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </Card>
+      </motion.div>
+
+      {/* Bottom CTA */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.5 }}
+      >
+        <Card className="bg-gradient-to-r from-slate-900 to-slate-800">
+          <div className="p-6 md:p-8">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+              <div className="text-center md:text-left">
+                <h3 className="text-xl md:text-2xl font-bold text-white mb-2">
+                  Smart Routes = More Money in Your Pocket
+                </h3>
+                <p className="text-slate-300 max-w-lg">
+                  Our AI optimizes your routes daily, saving you <span className="text-green-400 font-semibold">${yearlySavingsAmount.toLocaleString()}/year</span> in fuel and giving you <span className="text-green-400 font-semibold">{totalTimeSavedHours} hours</span> back every day.
+                </p>
+              </div>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Button variant="outline" className="border-slate-600 text-white hover:bg-slate-700">
                   <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
                   </svg>
-                  Complete Service
+                  Share Report
+                </Button>
+                <Button className="bg-green-500 hover:bg-green-600 text-white">
+                  <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  Open in Maps
                 </Button>
               </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            </div>
+          </div>
+        </Card>
+      </motion.div>
+
+      {/* Add Stop Modal */}
+      {addStopModal && (
+        <AddStopModal
+          isOpen={addStopModal.isOpen}
+          onClose={() => setAddStopModal(null)}
+          technicianId={addStopModal.techId}
+          technicianName={addStopModal.techName}
+          existingStops={routes.find(r => r.technicianId === addStopModal.techId)?.stops || []}
+        />
+      )}
     </div>
   );
 }

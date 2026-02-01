@@ -2,7 +2,8 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ReactNode } from 'react';
+import { ReactNode, useState, useEffect } from 'react';
+import { DemoModeToggle } from '@/components/onboarding';
 
 interface NavItem {
   name: string;
@@ -35,6 +36,26 @@ const navigation: NavItem[] = [
           strokeLinejoin="round"
           strokeWidth={1.5}
           d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+        />
+      </svg>
+    ),
+  },
+  {
+    name: 'Technicians',
+    href: '/technicians',
+    icon: (
+      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={1.5}
+          d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+        />
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={1.5}
+          d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
         />
       </svg>
     ),
@@ -90,29 +111,39 @@ interface SidebarProps {
 
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const pathname = usePathname();
+  const [showDemoToggle, setShowDemoToggle] = useState(false);
+
+  // Check if onboarding is complete to show demo mode toggle
+  useEffect(() => {
+    const onboardingComplete = localStorage.getItem('poolapp-onboarding-complete');
+    setShowDemoToggle(onboardingComplete === 'true');
+  }, []);
 
   return (
     <>
       {/* Mobile overlay */}
       {isOpen && (
         <div
-          className="fixed inset-0 z-40 bg-slate-900/50 lg:hidden"
+          className="fixed inset-0 z-40 bg-slate-900/50 dark:bg-black/60 lg:hidden"
           onClick={onClose}
+          aria-hidden="true"
         />
       )}
 
       {/* Sidebar */}
       <aside
         className={`
-          fixed inset-y-0 left-0 z-50 w-64 bg-navy-500 transform transition-transform duration-200 ease-in-out
+          fixed inset-y-0 left-0 z-50 w-64 bg-navy-500 dark:bg-surface-900 transform transition-transform duration-200 ease-in-out
           lg:translate-x-0 lg:static lg:z-auto
           ${isOpen ? 'translate-x-0' : '-translate-x-full'}
         `}
+        role="navigation"
+        aria-label="Main navigation"
       >
         <div className="flex flex-col h-full">
           {/* Logo */}
-          <div className="flex items-center gap-3 px-6 py-5 border-b border-navy-400">
-            <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary-500">
+          <div className="flex items-center gap-3 px-6 py-5 border-b border-navy-400 dark:border-surface-700">
+            <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary-500" aria-hidden="true">
               <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path
                   strokeLinecap="round"
@@ -124,21 +155,22 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
             </div>
             <div>
               <h1 className="text-lg font-bold text-white">Pool App</h1>
-              <p className="text-xs text-navy-200">Route Optimization</p>
+              <p className="text-xs text-navy-200 dark:text-slate-400">Route Optimization</p>
             </div>
             {/* Mobile close button */}
             <button
               onClick={onClose}
-              className="ml-auto p-2 text-navy-200 hover:text-white lg:hidden"
+              className="ml-auto p-3 min-w-[44px] min-h-[44px] text-navy-200 dark:text-slate-400 hover:text-white dark:hover:text-slate-200 lg:hidden flex items-center justify-center transition-colors"
+              aria-label="Close navigation menu"
             >
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-auto">
+          <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-auto" aria-label="Sidebar navigation">
             {navigation.map((item) => {
               const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
               return (
@@ -147,27 +179,35 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                   href={item.href}
                   onClick={onClose}
                   className={`
-                    flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
+                    flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors min-h-[44px]
                     ${
                       isActive
                         ? 'bg-primary-500 text-white'
-                        : 'text-navy-200 hover:bg-navy-400 hover:text-white'
+                        : 'text-navy-200 dark:text-slate-400 hover:bg-navy-400 dark:hover:bg-surface-800 hover:text-white dark:hover:text-slate-200'
                     }
                   `}
+                  aria-current={isActive ? 'page' : undefined}
                 >
-                  {item.icon}
+                  <span aria-hidden="true">{item.icon}</span>
                   {item.name}
                 </Link>
               );
             })}
           </nav>
 
+          {/* Demo Mode Toggle - shown after onboarding */}
+          {showDemoToggle && (
+            <div className="px-4 py-3 border-t border-navy-400 dark:border-surface-700">
+              <DemoModeToggle />
+            </div>
+          )}
+
           {/* Bottom section */}
-          <div className="px-4 py-4 border-t border-navy-400">
-            <div className="px-3 py-3 bg-navy-400 rounded-lg">
+          <div className="px-4 py-4 border-t border-navy-400 dark:border-surface-700">
+            <div className="px-3 py-3 bg-navy-400 dark:bg-surface-800 rounded-lg">
               <div className="flex items-center gap-3">
                 <div className="flex-shrink-0">
-                  <div className="w-8 h-8 rounded-full bg-cyan-500 flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-full bg-cyan-500 dark:bg-cyan-600 flex items-center justify-center" aria-hidden="true">
                     <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path
                         strokeLinecap="round"
@@ -180,10 +220,10 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-white">Growth Plan</p>
-                  <p className="text-xs text-navy-200">8/10 routes used</p>
+                  <p className="text-xs text-navy-200 dark:text-slate-400">8/10 routes used</p>
                 </div>
               </div>
-              <button className="mt-3 w-full px-3 py-1.5 text-xs font-medium text-cyan-400 border border-cyan-400/50 rounded-md hover:bg-cyan-400/10 transition-colors">
+              <button className="mt-3 w-full px-4 py-3 text-sm font-medium text-cyan-400 dark:text-cyan-300 border border-cyan-400/50 dark:border-cyan-500/50 rounded-lg hover:bg-cyan-400/10 dark:hover:bg-cyan-500/10 transition-colors min-h-[44px]">
                 Upgrade Plan
               </button>
             </div>
