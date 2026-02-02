@@ -299,6 +299,29 @@ export interface InvoiceItem {
   created_at: Timestamp;
 }
 
+/** TechnicianLocation - Real-time GPS location of a technician */
+export interface TechnicianLocation {
+  id: UUID;
+  technician_id: UUID;
+  company_id: UUID;
+  latitude: number;
+  longitude: number;
+  accuracy_meters: number | null;
+  heading: number | null;
+  speed_mph: number | null;
+  updated_at: Timestamp;
+}
+
+/** JobPhoto - Photo uploaded as proof of service completion */
+export interface JobPhoto {
+  id: UUID;
+  company_id: UUID;
+  job_id: UUID;
+  technician_id: UUID;
+  photo_url: string;
+  uploaded_at: Timestamp;
+}
+
 // =============================================================================
 // Insert Types (for creating new records)
 // =============================================================================
@@ -325,8 +348,11 @@ export type ServiceScheduleInsert = Omit<ServiceSchedule, 'id' | 'created_at' | 
   id?: UUID;
 };
 
-export type ServiceJobInsert = Omit<ServiceJob, 'id' | 'created_at' | 'updated_at'> & {
+export type ServiceJobInsert = Omit<ServiceJob, 'id' | 'created_at' | 'updated_at' | 'schedule_id' | 'route_id' | 'route_order'> & {
   id?: UUID;
+  schedule_id?: UUID | null;
+  route_id?: UUID | null;
+  route_order?: number | null;
 };
 
 export type ServiceLogInsert = Omit<ServiceLog, 'id' | 'created_at'> & {
@@ -345,6 +371,15 @@ export type InvoiceItemInsert = Omit<InvoiceItem, 'id' | 'created_at'> & {
   id?: UUID;
 };
 
+export type TechnicianLocationInsert = Omit<TechnicianLocation, 'id' | 'updated_at'> & {
+  id?: UUID;
+  updated_at?: Timestamp;
+};
+
+export type JobPhotoInsert = Omit<JobPhoto, 'id' | 'uploaded_at'> & {
+  id?: UUID;
+};
+
 // =============================================================================
 // Update Types (for partial updates)
 // =============================================================================
@@ -360,6 +395,8 @@ export type ServiceLogUpdate = Partial<Omit<ServiceLog, 'id' | 'created_at'>>;
 export type RouteUpdate = Partial<Omit<Route, 'id' | 'created_at'>>;
 export type InvoiceUpdate = Partial<Omit<Invoice, 'id' | 'created_at'>>;
 export type InvoiceItemUpdate = Partial<Omit<InvoiceItem, 'id' | 'created_at'>>;
+export type TechnicianLocationUpdate = Partial<Omit<TechnicianLocation, 'id'>>;
+export type JobPhotoUpdate = Partial<Omit<JobPhoto, 'id' | 'uploaded_at'>>;
 
 // =============================================================================
 // Joined/Extended Types (for queries with relations)
@@ -464,6 +501,16 @@ export interface Database {
         Row: InvoiceItem;
         Insert: InvoiceItemInsert;
         Update: InvoiceItemUpdate;
+      };
+      technician_locations: {
+        Row: TechnicianLocation;
+        Insert: TechnicianLocationInsert;
+        Update: TechnicianLocationUpdate;
+      };
+      job_photos: {
+        Row: JobPhoto;
+        Insert: JobPhotoInsert;
+        Update: JobPhotoUpdate;
       };
     };
     Functions: {

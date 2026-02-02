@@ -1,0 +1,75 @@
+{
+  "timestamp": "2026-02-02T04:54:31.348Z",
+  "period": "last_7_days",
+  "metrics": {
+    "bounceRate": 49.7,
+    "avgSessionDuration": 93.8,
+    "pagesPerSession": 2.2,
+    "demoRequestRate": 3.1,
+    "pricingPageConversion": 4.1,
+    "pageLoadTime": 3.4,
+    "mobileTrafficShare": 41.5,
+    "totalVisitors": 166,
+    "uniqueVisitors": 141,
+    "pageViews": 498
+  },
+  "topPages": [
+    {
+      "path": "/",
+      "views": 149,
+      "bounceRate": 48.60962819604335
+    },
+    {
+      "path": "/pricing",
+      "views": 58,
+      "bounceRate": 40.999233282833885
+    },
+    {
+      "path": "/features",
+      "views": 41,
+      "bounceRate": 47.80860672996787
+    },
+    {
+      "path": "/demo",
+      "views": 24,
+      "bounceRate": 31.421108334681648
+    },
+    {
+      "path": "/about",
+      "views": 16,
+      "bounceRate": 67.79968340741834
+    }
+  ],
+  "trafficSources": [
+    {
+      "source": "organic",
+      "visitors": 66,
+      "conversion": 4.081554893580284
+    },
+    {
+      "source": "direct",
+      "visitors": 49,
+      "conversion": 4.807190481495298
+    },
+    {
+      "source": "referral",
+      "visitors": 24,
+      "conversion": 2.9117767160214854
+    },
+    {
+      "source": "social",
+      "visitors": 16,
+      "conversion": 1.3278110266035008
+    },
+    {
+      "source": "email",
+      "visitors": 8,
+      "conversion": 7.307695603475867
+    }
+  ],
+  "deviceBreakdown": {
+    "desktop": 60,
+    "mobile": 30,
+    "tablet": 13
+  }
+}

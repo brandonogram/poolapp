@@ -8,6 +8,7 @@ export { Avatar } from './avatar';
 export { Card, AnimatedCard, StatusCard } from './card';
 export { default as Container } from './Container';
 export { Toast, useToast } from './toast';
+export { Dialog, DialogBody, DialogFooter } from './dialog';
 
 // Loading states
 export {

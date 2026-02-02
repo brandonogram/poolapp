@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button, Badge, Card } from '@/components/ui';
 import { useRoutes } from '@/lib/routes-context';
-import { AddStopModal, StopCard } from '@/components/routes';
+import { AddStopModal, StopCard, TechnicianLocationMap } from '@/components/routes';
+import { useRealtimeJobs } from '@/hooks/useRealtimeJobs';
 
 const WORKING_DAYS_PER_WEEK = 5;
 const WEEKS_PER_YEAR = 52;
@@ -32,6 +33,15 @@ function RoutesPageContent() {
   const [selectedTech, setSelectedTech] = useState<string | null>(null);
   const [showBeforeAfter, setShowBeforeAfter] = useState<'after' | 'before'>('after');
   const [addStopModal, setAddStopModal] = useState<{ isOpen: boolean; techId: string; techName: string } | null>(null);
+  const [showMap, setShowMap] = useState(false);
+
+  // Real-time jobs subscription
+  // Using a demo company ID - in production, this would come from auth context
+  const demoCompanyId = 'demo-company-id';
+  const { jobs: realtimeJobs, isConnected, loading: realtimeLoading, refresh: refreshJobs } = useRealtimeJobs(
+    demoCompanyId,
+    { autoConnect: true }
+  );
 
   const savings = getTotalSavings();
 
@@ -84,9 +94,24 @@ function RoutesPageContent() {
             <div>
               <div className="flex items-center gap-2 mb-1">
                 <span className="text-green-100 text-sm font-medium">Today's Route Optimization</span>
-                <Badge variant="success" className="bg-white/20 text-white border-0">
-                  Live
+                <Badge
+                  variant={isConnected ? 'success' : 'default'}
+                  className={`border-0 ${
+                    isConnected
+                      ? 'bg-white/20 text-white'
+                      : 'bg-white/10 text-white/70'
+                  }`}
+                >
+                  <span className={`inline-block w-2 h-2 rounded-full mr-1.5 ${
+                    isConnected ? 'bg-green-400 animate-pulse' : 'bg-white/50'
+                  }`} />
+                  {isConnected ? 'Live' : 'Connecting...'}
                 </Badge>
+                {realtimeJobs.length > 0 && (
+                  <span className="text-green-100 text-xs">
+                    ({realtimeJobs.length} jobs synced)
+                  </span>
+                )}
               </div>
               <h1 className="text-2xl md:text-3xl font-bold">You're Saving Money Today</h1>
             </div>
@@ -431,6 +456,88 @@ function RoutesPageContent() {
         </motion.div>
       </div>
 
+      {/* Technician Location Map Section */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.38 }}
+      >
+        <Card>
+          <div className="p-5 border-b border-slate-100">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-lg font-semibold text-slate-900">Live Technician Tracking</h2>
+                  <Badge
+                    variant={isConnected ? 'success' : 'default'}
+                    className={isConnected ? 'bg-green-100 text-green-700' : ''}
+                  >
+                    <span className={`inline-block w-1.5 h-1.5 rounded-full mr-1 ${
+                      isConnected ? 'bg-green-500 animate-pulse' : 'bg-slate-400'
+                    }`} />
+                    {isConnected ? 'Live' : 'Offline'}
+                  </Badge>
+                </div>
+                <p className="text-sm text-slate-500 mt-0.5">See where your technicians are in real-time</p>
+              </div>
+              <Button
+                variant="outline"
+                onClick={() => setShowMap(!showMap)}
+                className="flex items-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                </svg>
+                {showMap ? 'Hide Map' : 'Show Map'}
+              </Button>
+            </div>
+          </div>
+
+          <AnimatePresence>
+            {showMap && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="overflow-hidden"
+              >
+                <div className="p-5">
+                  <TechnicianLocationMap
+                    companyId={demoCompanyId}
+                    height={350}
+                    showLiveIndicator={false}
+                    onTechnicianClick={(location) => {
+                      // Find and select the matching technician in routes
+                      const matchingRoute = routes.find(
+                        r => r.technicianId === location.technician_id
+                      );
+                      if (matchingRoute) {
+                        setSelectedTech(location.technician_id);
+                      }
+                    }}
+                  />
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {!showMap && (
+            <div className="p-5">
+              <div className="flex items-center justify-center gap-6 py-8 text-slate-500">
+                <svg className="w-16 h-16 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                <div>
+                  <p className="font-medium text-slate-700">Track technicians in real-time</p>
+                  <p className="text-sm">Click "Show Map" to see live locations</p>
+                </div>
+              </div>
+            </div>
+          )}
+        </Card>
+      </motion.div>
+
       {/* Per-Tech Routes with CRUD */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -445,6 +552,23 @@ function RoutesPageContent() {
                 <p className="text-sm text-slate-500 mt-0.5">Manage stops and optimize routes</p>
               </div>
               <div className="flex items-center gap-3">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => refreshJobs()}
+                  disabled={realtimeLoading}
+                  className="flex items-center gap-1.5"
+                >
+                  <svg
+                    className={`w-4 h-4 ${realtimeLoading ? 'animate-spin' : ''}`}
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  Refresh
+                </Button>
                 <span className="text-sm text-slate-500">
                   {completedStops} of {totalStops} stops completed
                 </span>

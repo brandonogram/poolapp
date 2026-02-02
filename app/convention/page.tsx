@@ -1,8 +1,21 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
+import Head from 'next/head';
+import {
+  trackCTAClick,
+  trackCheckoutStart,
+  trackFormInteraction,
+  vercelTrackConventionPageView,
+  vercelTrackConventionAction,
+  vercelTrackCTAClick,
+  vercelTrackCheckoutStart,
+  vercelTrackFormStart,
+  vercelTrackFormComplete,
+  vercelTrackTrialStart,
+} from '@/lib/analytics';
 
 // Pricing options for the convention
 const PLANS = [
@@ -55,14 +68,39 @@ export default function ConventionPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
 
+  // Track convention page view on mount
+  useEffect(() => {
+    vercelTrackConventionPageView('pool_spa_show_2026');
+  }, []);
+
   const handleGetStarted = async (planId: string) => {
+    const plan = PLANS.find(p => p.id === planId);
     setSelectedPlan(planId);
     setShowForm(true);
+
+    // Track CTA click and checkout start
+    trackCTAClick(planId === 'founder' ? 'founder_plan' : 'convention_plan', 'convention_page', '/convention');
+    vercelTrackCTAClick('convention_start_trial', { plan: planId });
+    vercelTrackConventionAction('pool_spa_show_2026', 'claim_offer');
+
+    if (plan) {
+      trackCheckoutStart(planId, plan.price);
+      vercelTrackCheckoutStart(planId as 'convention-special' | 'founder', plan.price);
+    }
+
+    // Track form start
+    trackFormInteraction('convention_signup', 'start');
+    vercelTrackFormStart('trial');
   };
 
   const handleCheckout = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+
+    // Track form submission
+    trackFormInteraction('convention_signup', 'submit');
+    vercelTrackFormComplete('trial');
+    vercelTrackTrialStart(selectedPlan as 'convention-special' | 'founder', 'convention_page');
 
     try {
       const response = await fetch('/api/create-checkout-session', {
@@ -92,6 +130,27 @@ export default function ConventionPage() {
   };
 
   return (
+    <>
+      {/* SEO Schema for Special Offer */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Offer",
+            "name": "Pool & Spa Show Convention Special",
+            "description": "Exclusive pool service software pricing for Pool & Spa Show attendees",
+            "price": "59.00",
+            "priceCurrency": "USD",
+            "priceValidUntil": "2026-01-31",
+            "availability": "https://schema.org/LimitedAvailability",
+            "seller": {
+              "@type": "Organization",
+              "name": "PoolApp"
+            }
+          }),
+        }}
+      />
     <div className="min-h-screen bg-gradient-to-b from-slate-900 via-blue-900 to-slate-900">
       {/* Header */}
       <header className="px-4 py-6">
@@ -129,11 +188,11 @@ export default function ConventionPage() {
             transition={{ delay: 0.1 }}
             className="text-4xl sm:text-5xl md:text-6xl font-bold text-white mb-6 leading-tight"
           >
-            Stop wasting{' '}
+            Pool Service Software{' '}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-400">
-              2 hours/day
+              Convention Special
             </span>{' '}
-            driving between pools
+            - Save $480/Year
           </motion.h1>
 
           <motion.p
@@ -361,9 +420,10 @@ export default function ConventionPage() {
       <footer className="px-4 py-8 border-t border-white/10">
         <div className="max-w-4xl mx-auto text-center text-white/40 text-sm">
           <p>Questions? Find us at the show or email hello@poolapp.com</p>
-          <p className="mt-2">Pool App 2026. Route smarter, work less.</p>
+          <p className="mt-2">PoolApp 2026 - Pool service route optimization software.</p>
         </div>
       </footer>
     </div>
+    </>
   );
 }

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { GettingStartedChecklist, FeatureHint, DemoModeToggle } from '@/components/onboarding';
+import { AddJobModal, AddJobFAB } from '@/components/schedule/AddJobModal';
 
 // ============================================================================
 // MOCK DATA - Revenue-first, impressive numbers
@@ -204,12 +205,7 @@ export default function DashboardPage() {
           </svg>
           New Invoice
         </Link>
-        <Link href="/schedule" className="flex items-center gap-2 px-4 py-3 bg-green-600 text-white rounded-xl font-medium hover:bg-green-700 transition-colors whitespace-nowrap shadow-sm">
-          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
-          Add Job
-        </Link>
+        <AddJobModal />
         <Link
           href="/schedule"
           className="flex items-center gap-2 px-4 py-3 bg-slate-100 text-slate-700 rounded-xl font-medium hover:bg-slate-200 transition-colors whitespace-nowrap"
@@ -431,15 +427,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Floating Action Button for quick add - mobile only */}
-      <Link
-        href="/schedule"
-        className="fixed bottom-6 right-6 w-14 h-14 bg-blue-600 rounded-full shadow-lg flex items-center justify-center text-white hover:bg-blue-700 active:scale-95 transition-all lg:hidden z-40"
-        aria-label="Add new job"
-      >
-        <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-        </svg>
-      </Link>
+      <AddJobFAB />
     </div>
   );
 }

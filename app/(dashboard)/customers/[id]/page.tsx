@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { Button, Badge, Card, Avatar } from '@/components/ui';
 import { useCustomers, Customer, CustomerFormData } from '@/lib/customers-context';
 import { CustomerForm, ConfirmDialog } from '@/components/customers/CustomerForm';
+import { ChemistryAlerts } from '@/components/customers/ChemistryAlerts';
 
 const poolTypeLabels: Record<string, string> = {
   'residential': 'Residential Pool',
@@ -358,6 +359,16 @@ export default function CustomerDetailPage() {
               Last reading: {customer.chemistry.lastReadingDate}
             </p>
           </Card>
+
+          {/* Chemistry Alerts from API */}
+          <ChemistryAlerts
+            customerId={customerId}
+            onScheduleTreatment={(poolId, issues) => {
+              // Navigate to schedule page or open scheduling modal
+              console.log('Schedule treatment for pool:', poolId, 'Issues:', issues);
+              router.push('/schedule');
+            }}
+          />
         </div>
 
         {/* Middle and right columns - Service info and history */}

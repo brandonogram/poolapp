@@ -6,7 +6,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "analytics:check": "npx ts-node scripts/check-improvements.ts",
+    "analytics:report": "npx ts-node scripts/weekly-report.ts",
+    "analytics:monitor": "npx ts-node scripts/analytics-monitor.ts --watch"
   },
   "dependencies": {
     "@stripe/stripe-js": "^8.6.4",
@@ -14,6 +17,8 @@
     "@tailwindcss/postcss": "^4.1.18",
     "@types/node": "^25.0.10",
     "@types/react": "^19.2.9",
+    "@vercel/analytics": "^1.6.1",
+    "@vercel/speed-insights": "^1.3.1",
     "autoprefixer": "^10.4.23",
     "framer-motion": "^12.28.2",
     "next": "^14.2.35",
@@ -28,6 +33,8 @@
   },
   "devDependencies": {
     "@types/qrcode": "^1.5.6",
-    "playwright": "^1.57.0"
+    "@types/react-dom": "^19.2.3",
+    "playwright": "^1.57.0",
+    "ts-node": "^10.9.2"
   }
 }

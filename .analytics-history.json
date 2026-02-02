@@ -1,0 +1,87 @@
+[
+  {
+    "weekStarting": "2026-01-27",
+    "weekEnding": "2026-02-02",
+    "metrics": {
+      "visitors": 166,
+      "uniqueVisitors": 136,
+      "pageViews": 410,
+      "bounceRate": 49.7,
+      "avgSessionDuration": 93.8,
+      "pagesPerSession": 2.5,
+      "demoRequests": 6,
+      "demoRequestRate": 3.6,
+      "pricingViews": 53,
+      "pricingConversion": 1.9,
+      "signups": 1
+    },
+    "topPages": [
+      {
+        "path": "/",
+        "views": 141,
+        "change": -7
+      },
+      {
+        "path": "/pricing",
+        "views": 53,
+        "change": 7
+      },
+      {
+        "path": "/features",
+        "views": 46,
+        "change": -4
+      },
+      {
+        "path": "/demo",
+        "views": 29,
+        "change": -14
+      },
+      {
+        "path": "/about",
+        "views": 19,
+        "change": -5
+      }
+    ],
+    "trafficSources": [
+      {
+        "source": "Organic Search",
+        "visitors": 63,
+        "change": 2
+      },
+      {
+        "source": "Direct",
+        "visitors": 46,
+        "change": 5
+      },
+      {
+        "source": "Referral",
+        "visitors": 29,
+        "change": -7
+      },
+      {
+        "source": "Social",
+        "visitors": 16,
+        "change": 0
+      },
+      {
+        "source": "Email",
+        "visitors": 9,
+        "change": -5
+      }
+    ],
+    "goals": {
+      "demosRequested": {
+        "target": 10,
+        "actual": 6
+      },
+      "signups": {
+        "target": 2,
+        "actual": 1
+      },
+      "bounceRate": {
+        "target": 50,
+        "actual": 50
+      }
+    }
+  }
+]
