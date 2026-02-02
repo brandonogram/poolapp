@@ -16,6 +16,7 @@ INSERT INTO companies (
   '{"cities": ["Hockessin", "Wilmington", "Newark"], "states": ["DE"]}'::jsonb,
   'trial',
   NOW() + INTERVAL '1 year',
+  NOW(),
   NOW()
 );
 

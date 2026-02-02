@@ -40,7 +40,7 @@ CREATE TABLE IF NOT EXISTS job_photos (
 
 CREATE INDEX IF NOT EXISTS idx_technician_locations_company ON technician_locations(company_id);
 CREATE INDEX IF NOT EXISTS idx_technician_locations_technician ON technician_locations(technician_id);
-CREATE INDEX IF NOT EXISTS idx_technician_locations_last_seen ON technician_locations(last_seen);
+CREATE INDEX IF NOT EXISTS idx_technician_locations_updated_at ON technician_locations(updated_at);
 
 CREATE INDEX IF NOT EXISTS idx_job_photos_company ON job_photos(company_id);
 CREATE INDEX IF NOT EXISTS idx_job_photos_job ON job_photos(job_id);

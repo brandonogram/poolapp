@@ -23,7 +23,9 @@ INSERT INTO companies (
   '19707',
   '{"cities": ["Hockessin", "Wilmington", "Newark"], "states": ["DE"]}'::jsonb,
   'trial'
-);
+) ON CONFLICT (slug) DO UPDATE SET
+  id = EXCLUDED.id,
+  name = EXCLUDED.name;
 
 -- =============================================================================
 -- Sample Users
