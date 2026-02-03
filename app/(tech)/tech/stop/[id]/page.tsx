@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useTech, type ChemistryReading } from '@/lib/tech-context';
 import { ChemistryInput } from '@/components/tech/ChemistryInput';
@@ -26,36 +26,161 @@ const NavigationIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
+type DosingStep = {
+  key: string;
+  chemical: string;
+  amount: string;
+  reason: string;
+  wait: string;
+  notes?: string;
+  order: number;
+};
+
+const TARGETS = {
+  pH: { min: 7.2, max: 7.8, target: 7.5 },
+  chlorine: { min: 1, max: 3, target: 2 },
+  alkalinity: { min: 80, max: 120, target: 100 },
+  cya: { min: 20, max: 50, target: 30 },
+  calcium: { min: 200, max: 400, target: 250 },
+  salt: { target: 3200 },
+};
+
+const MAX_SODA_ASH_OZ_PER_10K = 16;
+const MAX_BICARB_LB_PER_10K = 1;
+
+const roundTo = (value: number, decimals = 1) => {
+  const factor = Math.pow(10, decimals);
+  return Math.round(value * factor) / factor;
+};
+
+const formatAmount = (value: number, unit: string) => `${roundTo(value, 1)} ${unit}`;
+
 // Chemical dosing calculator based on readings and pool size
-function calculateDosing(chemistry: ChemistryReading, poolSize: number) {
-  const dosing: { chemical: string; amount: string; reason: string }[] = [];
+function calculateDosing(chemistry: ChemistryReading, poolSize: number, poolType: string) {
+  const dosing: DosingStep[] = [];
+  const factor = poolSize / 10000;
+
+  const needsAlkRaise = chemistry.alkalinity < TARGETS.alkalinity.min;
+  const needsPhRaise = chemistry.pH < TARGETS.pH.min;
+
+  // Total Alkalinity (raise only)
+  if (needsAlkRaise) {
+    const delta = TARGETS.alkalinity.target - chemistry.alkalinity;
+    const lbsBicarbonateRaw = (delta / 10) * 1.25 * factor;
+    const maxBicarb = MAX_BICARB_LB_PER_10K * factor;
+    const lbsBicarbonate = Math.min(lbsBicarbonateRaw, maxBicarb);
+    dosing.push({
+      key: 'alkalinity',
+      chemical: 'Sodium Bicarbonate',
+      amount: formatAmount(lbsBicarbonate, 'lb'),
+      reason: 'Raise total alkalinity',
+      wait: 'Circulate 6-8 hours, then retest',
+      notes: lbsBicarbonateRaw > maxBicarb ? 'Split dose. Do not add more than 1 lb per 10,000 gal at one time.' : undefined,
+      order: 10,
+    });
+  }
 
   // pH adjustments
-  if (chemistry.pH > 7.6) {
-    const ozAcid = Math.round((chemistry.pH - 7.4) * poolSize * 0.0008);
-    dosing.push({ chemical: 'Muriatic Acid', amount: `${ozAcid} oz`, reason: 'Lower pH' });
-  } else if (chemistry.pH < 7.2) {
-    const ozSoda = Math.round((7.4 - chemistry.pH) * poolSize * 0.001);
-    dosing.push({ chemical: 'Soda Ash', amount: `${ozSoda} oz`, reason: 'Raise pH' });
+  if (chemistry.pH > TARGETS.pH.max) {
+    const delta = chemistry.pH - TARGETS.pH.target;
+    const ozAcid = (delta / 0.2) * 16 * factor;
+    dosing.push({
+      key: 'ph-low',
+      chemical: 'Muriatic Acid (31.45%)',
+      amount: formatAmount(ozAcid, 'fl oz'),
+      reason: 'Lower pH',
+      wait: 'Circulate 4-6 hours, then retest',
+      notes: 'Allow at least 1 hour between acid and chlorine additions.',
+      order: 20,
+    });
+  } else if (needsPhRaise) {
+    const delta = TARGETS.pH.target - chemistry.pH;
+    const ozSodaRaw = (delta / 0.2) * 6 * factor;
+    const maxOz = MAX_SODA_ASH_OZ_PER_10K * factor;
+    const ozSoda = Math.min(ozSodaRaw, maxOz);
+    dosing.push({
+      key: 'ph-high',
+      chemical: 'Soda Ash (pH Up)',
+      amount: formatAmount(ozSoda, 'oz'),
+      reason: 'Raise pH',
+      wait: 'Circulate 4-6 hours, then retest',
+      notes: ozSodaRaw > maxOz ? 'Split dose. Do not add more than 1 lb per 10,000 gal at once.' : undefined,
+      order: 20,
+    });
   }
 
-  // Chlorine adjustments
-  if (chemistry.chlorine < 1) {
-    const tabs = Math.ceil((2 - chemistry.chlorine) * poolSize / 10000);
-    dosing.push({ chemical: 'Chlorine Tabs', amount: `${tabs} tabs`, reason: 'Raise chlorine' });
+  // Calcium hardness (raise only)
+  if (chemistry.calcium !== undefined && chemistry.calcium < TARGETS.calcium.min) {
+    const delta = TARGETS.calcium.target - chemistry.calcium;
+    const lbsCalcium = (delta / 10) * 1.25 * factor;
+    dosing.push({
+      key: 'calcium',
+      chemical: 'Calcium Chloride',
+      amount: formatAmount(lbsCalcium, 'lb'),
+      reason: 'Raise calcium hardness',
+      wait: 'Circulate a couple of hours, then retest',
+      notes: needsAlkRaise || needsPhRaise ? 'Do not add the same day as pH or alkalinity increaser.' : undefined,
+      order: 30,
+    });
   }
 
-  // Alkalinity adjustments
-  if (chemistry.alkalinity < 80) {
-    const lbsBicarbonate = Math.round((100 - chemistry.alkalinity) * poolSize / 10000 * 0.5);
-    dosing.push({ chemical: 'Sodium Bicarbonate', amount: `${lbsBicarbonate} lbs`, reason: 'Raise alkalinity' });
+  // Chlorine (liquid 12%)
+  if (chemistry.chlorine < TARGETS.chlorine.min) {
+    const delta = TARGETS.chlorine.target - chemistry.chlorine;
+    const ozLiquidChlorine = delta * 10 * factor;
+    dosing.push({
+      key: 'chlorine',
+      chemical: 'Liquid Chlorine (12%)',
+      amount: formatAmount(ozLiquidChlorine, 'fl oz'),
+      reason: 'Raise free chlorine',
+      wait: 'Circulate, then retest per label. Keep 1 hour between acid and chlorine.',
+      notes: 'If using a different strength, adjust dose.',
+      order: 40,
+    });
+  }
+
+  // Stabilizer (CYA)
+  if (chemistry.cya !== undefined && chemistry.cya < TARGETS.cya.min) {
+    const delta = TARGETS.cya.target - chemistry.cya;
+    const lbsCya = (delta / 10) * 1 * factor;
+    dosing.push({
+      key: 'cya',
+      chemical: 'Cyanuric Acid (Stabilizer)',
+      amount: formatAmount(lbsCya, 'lb'),
+      reason: 'Raise stabilizer (CYA)',
+      wait: 'Do not backwash for 48 hours; allow time to dissolve before retesting',
+      notes: 'Adjust pH and chlorine before adding stabilizer.',
+      order: 50,
+    });
+  }
+
+  // Salt (salt pools only)
+  if (poolType === 'Saltwater' && chemistry.salt !== undefined && chemistry.salt < TARGETS.salt.target) {
+    const delta = TARGETS.salt.target - chemistry.salt;
+    const lbsSalt = delta * poolSize * 0.00000834;
+    dosing.push({
+      key: 'salt',
+      chemical: 'Pool Salt',
+      amount: formatAmount(lbsSalt, 'lb'),
+      reason: 'Raise salt level',
+      wait: 'Circulate 24 hours before turning on the salt system',
+      notes: 'Target salt varies by cell. Verify equipment manual.',
+      order: 60,
+    });
   }
 
   if (dosing.length === 0) {
-    dosing.push({ chemical: 'None needed', amount: '-', reason: 'Chemistry is balanced' });
+    dosing.push({
+      key: 'none',
+      chemical: 'None needed',
+      amount: '-',
+      reason: 'Chemistry is balanced',
+      wait: '',
+      order: 0,
+    });
   }
 
-  return dosing;
+  return dosing.sort((a, b) => a.order - b.order);
 }
 
 export default function ServiceEntryPage() {
@@ -74,8 +199,11 @@ export default function ServiceEntryPage() {
   // Chemistry state
   const [chemistry, setChemistry] = useState<ChemistryReading>({
     pH: 7.4,
-    chlorine: 1.5,
-    alkalinity: 90,
+    chlorine: 2.5,
+    alkalinity: 100,
+    cya: 40,
+    calcium: 250,
+    salt: stop?.poolType === 'Saltwater' ? 3200 : undefined,
   });
 
   // Tasks state
@@ -92,6 +220,7 @@ export default function ServiceEntryPage() {
   const [photos, setPhotos] = useState<string[]>([]);
   const [notes, setNotes] = useState('');
   const [showPhotoCapture, setShowPhotoCapture] = useState(false);
+  const photoInputRef = useRef<HTMLInputElement | null>(null);
 
   // Redirect if stop not found
   useEffect(() => {
@@ -108,9 +237,12 @@ export default function ServiceEntryPage() {
     );
   }
 
-  const dosing = calculateDosing(chemistry, stop.poolSize);
+  const dosing = calculateDosing(chemistry, stop.poolSize, stop.poolType);
   const requiredTasks: (keyof typeof tasks)[] = ['skim', 'brush', 'baskets'];
+  const photoRequiredTasks: (keyof typeof tasks)[] = Object.keys(tasks) as (keyof typeof tasks)[];
   const allRequiredComplete = requiredTasks.every(task => tasks[task]);
+  const photoRequired = photoRequiredTasks.some(task => tasks[task]);
+  const hasRequiredPhoto = !photoRequired || photos.length > 0;
 
   const toggleTask = (task: keyof typeof tasks) => {
     setTasks(prev => ({ ...prev, [task]: !prev[task] }));
@@ -155,11 +287,16 @@ export default function ServiceEntryPage() {
   };
 
   const handlePhotoCapture = () => {
-    // In a real app, this would open the camera
-    // For demo, we simulate adding a photo
-    const mockPhotoUrl = `photo-${Date.now()}.jpg`;
-    setPhotos(prev => [...prev, mockPhotoUrl]);
+    photoInputRef.current?.click();
+  };
+
+  const handlePhotoSelected = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    const objectUrl = URL.createObjectURL(file);
+    setPhotos(prev => [...prev, objectUrl]);
     setShowPhotoCapture(false);
+    event.target.value = '';
   };
 
   const googleMapsUrl = `https://maps.google.com/?q=${encodeURIComponent(stop.address)}`;
@@ -234,6 +371,16 @@ export default function ServiceEntryPage() {
           Water Chemistry
         </h2>
 
+        <div className="mb-4 rounded-xl border border-slate-200 dark:border-surface-700 bg-slate-50 dark:bg-surface-900/30 p-3 text-sm text-slate-600 dark:text-slate-300">
+          <p className="font-semibold text-slate-700 dark:text-slate-200 mb-2">Basic test steps</p>
+          <ol className="list-decimal list-inside space-y-1">
+            <li>Collect a sample about 18 inches below the surface, away from return lines.</li>
+            <li>Test before adding chemicals.</li>
+            <li>Add one chemical at a time and allow circulation before adding another.</li>
+            <li>Adjust total alkalinity before pH for more stable results.</li>
+          </ol>
+        </div>
+
         {/* Chemistry Inputs - Large +/- buttons */}
         <div className="space-y-2 divide-y divide-slate-100 dark:divide-surface-700">
           <ChemistryInput
@@ -243,7 +390,7 @@ export default function ServiceEntryPage() {
             min={6.0}
             max={9.0}
             step={0.1}
-            idealRange={{ min: 7.2, max: 7.6 }}
+            idealRange={{ min: 7.2, max: 7.8 }}
           />
           <ChemistryInput
             label="Chlorine"
@@ -265,6 +412,38 @@ export default function ServiceEntryPage() {
             unit="ppm"
             idealRange={{ min: 80, max: 120 }}
           />
+          <ChemistryInput
+            label="CYA (Stabilizer)"
+            value={chemistry.cya ?? 0}
+            onChange={(v) => setChemistry(prev => ({ ...prev, cya: v }))}
+            min={0}
+            max={100}
+            step={10}
+            unit="ppm"
+            idealRange={{ min: 20, max: 50 }}
+          />
+          <ChemistryInput
+            label="Calcium Hardness"
+            value={chemistry.calcium ?? 0}
+            onChange={(v) => setChemistry(prev => ({ ...prev, calcium: v }))}
+            min={0}
+            max={600}
+            step={10}
+            unit="ppm"
+            idealRange={{ min: 200, max: 400 }}
+          />
+          {stop.poolType === 'Saltwater' && (
+            <ChemistryInput
+              label="Salt"
+              value={chemistry.salt ?? 0}
+              onChange={(v) => setChemistry(prev => ({ ...prev, salt: v }))}
+              min={0}
+              max={5000}
+              step={100}
+              unit="ppm"
+              idealRange={{ min: 2700, max: 3400 }}
+            />
+          )}
         </div>
       </div>
 
@@ -286,13 +465,25 @@ export default function ServiceEntryPage() {
           <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
             <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
           </svg>
-          Recommended Dosing
+          Recommended Dosing (Order + Wait Time)
         </h3>
         <ul className="space-y-2" aria-label="Chemical dosing recommendations">
           {dosing.map((dose, index) => (
-            <li key={index} className={`flex items-center justify-between ${dosing[0].chemical === 'None needed' ? 'text-green-700 dark:text-green-300' : 'text-amber-800 dark:text-amber-200'}`}>
-              <span className="font-medium">{dose.chemical}</span>
-              <span className="font-bold">{dose.amount}</span>
+            <li
+              key={dose.key}
+              className={`rounded-xl border p-3 ${dosing[0].chemical === 'None needed' ? 'border-green-200 dark:border-green-700 text-green-700 dark:text-green-300' : 'border-amber-200 dark:border-amber-700 text-amber-800 dark:text-amber-200'}`}
+            >
+              <div className="flex items-center justify-between font-semibold">
+                <span>{dose.chemical === 'None needed' ? dose.chemical : `Step ${index + 1}: ${dose.chemical}`}</span>
+                <span className="font-bold">{dose.amount}</span>
+              </div>
+              {dose.chemical !== 'None needed' && (
+                <div className="mt-1 text-xs text-amber-700 dark:text-amber-300">
+                  <div>{dose.reason}</div>
+                  {dose.wait && <div>Wait: {dose.wait}</div>}
+                  {dose.notes && <div>Note: {dose.notes}</div>}
+                </div>
+              )}
             </li>
           ))}
         </ul>
@@ -334,6 +525,11 @@ export default function ServiceEntryPage() {
           )}
         </h2>
         <TaskChecklist tasks={tasks} onToggle={toggleTask} requiredTasks={requiredTasks} />
+        {photoRequired && !hasRequiredPhoto && (
+          <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+            Photo required for any completed task before finishing.
+          </div>
+        )}
         <button
           onClick={handleQuickComplete}
           className="mt-4 w-full py-3 rounded-xl bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 font-semibold active:scale-[0.99] transition-transform"
@@ -372,12 +568,21 @@ export default function ServiceEntryPage() {
           </div>
         )}
 
+        <input
+          ref={photoInputRef}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          className="hidden"
+          onChange={handlePhotoSelected}
+          aria-hidden="true"
+        />
         <button
           onClick={handlePhotoCapture}
           className="w-full py-4 bg-slate-100 dark:bg-surface-700 text-slate-700 dark:text-slate-200 rounded-xl font-semibold flex items-center justify-center gap-2 active:bg-slate-200 dark:active:bg-surface-600 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-surface-800"
         >
           <CameraIcon className="w-6 h-6" aria-hidden="true" />
-          Add Photo
+          Take Photo
         </button>
       </div>
 
@@ -399,15 +604,15 @@ export default function ServiceEntryPage() {
       {/* Complete Button - Very Large */}
       <button
         onClick={handleComplete}
-        disabled={!allRequiredComplete}
+        disabled={!allRequiredComplete || !hasRequiredPhoto}
         className={`w-full py-6 rounded-2xl font-bold text-xl transition-all active:scale-98 shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-surface-900 ${
-          allRequiredComplete
+          allRequiredComplete && hasRequiredPhoto
             ? 'bg-green-600 dark:bg-green-700 text-white active:bg-green-700 dark:active:bg-green-600 focus:ring-green-500'
             : 'bg-slate-300 dark:bg-surface-600 text-slate-500 dark:text-slate-400 cursor-not-allowed'
         }`}
-        aria-disabled={!allRequiredComplete}
+        aria-disabled={!allRequiredComplete || !hasRequiredPhoto}
       >
-        {allRequiredComplete ? (
+        {allRequiredComplete && hasRequiredPhoto ? (
           <span className="flex items-center justify-center gap-2">
             <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -415,7 +620,7 @@ export default function ServiceEntryPage() {
             Complete Stop
           </span>
         ) : (
-          'Complete Required Tasks'
+          photoRequired && !hasRequiredPhoto ? 'Photo Required' : 'Complete Required Tasks'
         )}
       </button>
 
