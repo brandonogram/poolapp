@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Customer } from '@/lib/onboarding-context';
 
@@ -63,15 +63,17 @@ export default function MockMap({
   const [routeProgress, setRouteProgress] = useState(0);
 
   // Convert customers to pins
-  const customerPins: MapPin[] = customers.map((c, i) => ({
-    id: c.id,
-    lat: c.lat,
-    lng: c.lng,
-    label: c.name || `Pool ${i + 1}`,
-    type: 'customer' as const,
-  }));
+  const customerPins = useMemo(() => (
+    customers.map((c, i) => ({
+      id: c.id,
+      lat: c.lat,
+      lng: c.lng,
+      label: c.name || `Pool ${i + 1}`,
+      type: 'customer' as const,
+    }))
+  ), [customers]);
 
-  const allPins = [...pins, ...customerPins];
+  const allPins = useMemo(() => [...pins, ...customerPins], [pins, customerPins]);
 
   // Animate pins appearing
   useEffect(() => {
@@ -88,7 +90,7 @@ export default function MockMap({
         }, i * 300);
       });
     }
-  }, [allPins.length, animate]);
+  }, [allPins, animate, visiblePins]);
 
   // Animate route drawing
   useEffect(() => {

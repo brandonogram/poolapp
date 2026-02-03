@@ -1,5 +1,5 @@
 /**
- * Pool App - Analytics Monitor
+ * PoolOps - Analytics Monitor
  * Functions to aggregate metrics, calculate conversion rates, and identify trends
  */
 

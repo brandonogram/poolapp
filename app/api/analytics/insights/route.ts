@@ -1,5 +1,5 @@
 /**
- * Pool App - Analytics Insights API
+ * PoolOps - Analytics Insights API
  * Analyze collected data and generate improvement recommendations
  */
 

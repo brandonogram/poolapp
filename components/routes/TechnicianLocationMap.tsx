@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * Pool App - Technician Location Map
+ * PoolOps - Technician Location Map
  * Displays technician locations on a visual map representation
  */
 

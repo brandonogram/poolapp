@@ -3,6 +3,11 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
+import { getDemoStorage } from '@/lib/demo-session';
+import { useCustomers } from '@/lib/customers-context';
+import { useTechnicians } from '@/lib/technicians-context';
+import { useInvoices } from '@/lib/invoices-context';
+import { useRoutes } from '@/lib/routes-context';
 
 interface ChecklistItem {
   id: string;
@@ -21,17 +26,22 @@ export default function GettingStartedChecklist({ className = '' }: GettingStart
   const [isMinimized, setIsMinimized] = useState(false);
   const [isDismissed, setIsDismissed] = useState(false);
   const [checklist, setChecklist] = useState<ChecklistItem[]>([]);
+  const { customers } = useCustomers();
+  const { technicians } = useTechnicians();
+  const { invoices } = useInvoices();
+  const { routes } = useRoutes();
 
   useEffect(() => {
-    // Check localStorage for dismissed state
-    const dismissed = localStorage.getItem('poolapp-checklist-dismissed');
+    const storage = getDemoStorage();
+    // Check storage for dismissed state
+    const dismissed = storage?.getItem('poolapp-checklist-dismissed');
     if (dismissed === 'true') {
       setIsDismissed(true);
       return;
     }
 
     // Load checklist state
-    const savedChecklist = localStorage.getItem('poolapp-checklist');
+    const savedChecklist = storage?.getItem('poolapp-checklist');
     const parsed = savedChecklist ? JSON.parse(savedChecklist) : {};
 
     setChecklist([
@@ -98,12 +108,42 @@ export default function GettingStartedChecklist({ className = '' }: GettingStart
     ]);
   }, []);
 
+  useEffect(() => {
+    const storage = getDemoStorage();
+    setChecklist((prev) => {
+      if (prev.length === 0) return prev;
+      const nextChecklist = prev.map(item => {
+        if (item.id === 'technicians') {
+          return { ...item, isComplete: technicians.length > 0 };
+        }
+        if (item.id === 'customers') {
+          return { ...item, isComplete: customers.length > 0 };
+        }
+        if (item.id === 'routes') {
+          const hasStops = routes.some(route => route.stops.length > 0);
+          return { ...item, isComplete: hasStops };
+        }
+        if (item.id === 'invoices') {
+          return { ...item, isComplete: invoices.length > 0 };
+        }
+        return item;
+      });
+      const savedState: Record<string, boolean> = {};
+      nextChecklist.forEach(item => {
+        savedState[item.id] = item.isComplete;
+      });
+      storage?.setItem('poolapp-checklist', JSON.stringify(savedState));
+      return nextChecklist;
+    });
+  }, [customers.length, technicians.length, invoices.length, routes]);
+
   const completedCount = checklist.filter(item => item.isComplete).length;
   const totalCount = checklist.length;
   const progressPercent = (completedCount / totalCount) * 100;
 
   const handleDismiss = () => {
-    localStorage.setItem('poolapp-checklist-dismissed', 'true');
+    const storage = getDemoStorage();
+    storage?.setItem('poolapp-checklist-dismissed', 'true');
     setIsDismissed(true);
   };
 
@@ -113,12 +153,13 @@ export default function GettingStartedChecklist({ className = '' }: GettingStart
     );
     setChecklist(newChecklist);
 
-    // Save to localStorage
+    // Save to storage
     const savedState: Record<string, boolean> = {};
     newChecklist.forEach(item => {
       savedState[item.id] = item.isComplete;
     });
-    localStorage.setItem('poolapp-checklist', JSON.stringify(savedState));
+    const storage = getDemoStorage();
+    storage?.setItem('poolapp-checklist', JSON.stringify(savedState));
   };
 
   if (isDismissed) {

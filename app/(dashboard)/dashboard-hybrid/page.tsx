@@ -592,7 +592,7 @@ export default function DashboardHybridPage() {
               View minimal dashboard option
             </Link>
             {' | '}
-            <Link href="/demo" className="text-blue-600 hover:underline">
+            <Link href="/ui-demo" className="text-blue-600 hover:underline">
               View UI components demo
             </Link>
           </p>

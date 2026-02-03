@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback, useMemo } from 'react';
 import { trackHotjarEvent } from './Hotjar';
 
 /**
@@ -159,7 +159,10 @@ export default function ScrollDepthTracker({
  * Hook version for more control
  */
 export function useScrollDepthTracking(options?: Omit<ScrollDepthTrackerProps, 'onMilestoneReached'>) {
-  const milestones = options?.milestones || [25, 50, 75, 100];
+  const milestones = useMemo(
+    () => options?.milestones || [25, 50, 75, 100],
+    [options?.milestones]
+  );
   const reachedMilestones = useRef<Map<number, ScrollMilestone>>(new Map());
 
   const getMilestones = useCallback(() => {

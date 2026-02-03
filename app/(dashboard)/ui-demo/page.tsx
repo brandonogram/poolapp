@@ -86,6 +86,15 @@ export default function DemoPage() {
   return (
     <ToastProvider>
       <div className="min-h-screen p-8 max-w-6xl mx-auto space-y-12">
+        <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-900 flex items-center justify-between gap-4">
+          <div>
+            <p className="font-semibold">Internal UI Components Demo</p>
+            <p className="text-sm text-amber-800">This page is for UI testing only.</p>
+          </div>
+          <Button variant="primary" size="sm" onClick={() => window.location.href = '/demo'}>
+            Go to Demo Dashboard
+          </Button>
+        </div>
         {/* Header */}
         <div>
           <h1 className="text-3xl font-bold text-slate-900">UI Components Demo</h1>

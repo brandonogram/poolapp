@@ -17,9 +17,9 @@ export default function DashboardLayout({
 
   return (
     <TechniciansProvider>
-      <ScheduleProvider>
-        <RoutesProvider>
-          <CustomersProvider>
+      <CustomersProvider>
+        <ScheduleProvider>
+          <RoutesProvider>
             <InvoicesProvider>
               <div className="min-h-screen bg-slate-50 dark:bg-surface-950 transition-colors">
                 <div className="flex">
@@ -39,9 +39,9 @@ export default function DashboardLayout({
                 </div>
               </div>
             </InvoicesProvider>
-          </CustomersProvider>
-        </RoutesProvider>
-      </ScheduleProvider>
+          </RoutesProvider>
+        </ScheduleProvider>
+      </CustomersProvider>
     </TechniciansProvider>
   );
 }

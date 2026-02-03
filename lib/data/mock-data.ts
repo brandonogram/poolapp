@@ -1,5 +1,5 @@
 /**
- * Pool App - Mock Data
+ * PoolOps - Mock Data
  * Realistic sample data for development and testing
  */
 

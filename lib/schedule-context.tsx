@@ -1,7 +1,9 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { technicians, customers } from './mock-data';
+import { useCustomers, Customer } from './customers-context';
+import { useTechnicians, Technician } from './technicians-context';
+import { getDemoStorage } from './demo-session';
 
 export interface Job {
   id: string;
@@ -32,7 +34,14 @@ interface ScheduleContextType {
 const ScheduleContext = createContext<ScheduleContextType | undefined>(undefined);
 
 // Generate initial mock data for a realistic week
-function generateInitialJobs(): Job[] {
+function getJobRate(customer: Customer): number {
+  const monthlyRate = customer.monthlyRate || 150;
+  if (customer.serviceFrequency === 'weekly') return Math.round(monthlyRate / 4);
+  if (customer.serviceFrequency === 'bi-weekly') return Math.round(monthlyRate / 2);
+  return Math.round(monthlyRate);
+}
+
+function generateInitialJobs(customers: Customer[], technicians: Technician[]): Job[] {
   const jobs: Job[] = [];
 
   // Get current week dates (Mon-Fri)
@@ -89,7 +98,7 @@ function generateInitialJobs(): Job[] {
           serviceType: serviceTypes[Math.floor(Math.random() * serviceTypes.length)],
           status,
           duration: 30 + Math.floor(Math.random() * 30),
-          rate: customer.rate || 150,
+          rate: getJobRate(customer),
           notes: j % 4 === 0 ? 'Check filter pressure' : undefined,
         });
 
@@ -104,30 +113,40 @@ function generateInitialJobs(): Job[] {
 const STORAGE_KEY = 'poolapp-schedule';
 
 export function ScheduleProvider({ children }: { children: ReactNode }) {
+  const { customers } = useCustomers();
+  const { technicians } = useTechnicians();
   const [jobs, setJobs] = useState<Job[]>([]);
   const [isInitialized, setIsInitialized] = useState(false);
 
-  // Load from localStorage on mount
+  // Load from storage on mount or generate when data is ready
   useEffect(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
+    const storage = getDemoStorage();
+    const saved = storage?.getItem(STORAGE_KEY);
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
         setJobs(parsed);
+        setIsInitialized(true);
+        return;
       } catch (e) {
         console.error('Failed to load schedule state:', e);
-        setJobs(generateInitialJobs());
       }
-    } else {
-      setJobs(generateInitialJobs());
     }
-    setIsInitialized(true);
-  }, []);
 
-  // Save to localStorage on change (but only after initial load)
+    if (customers.length === 0 || technicians.length === 0) {
+      return;
+    }
+
+    const generated = generateInitialJobs(customers, technicians);
+    setJobs(generated);
+    setIsInitialized(true);
+  }, [customers, technicians]);
+
+  // Save to storage on change (but only after initial load)
   useEffect(() => {
     if (isInitialized) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(jobs));
+      const storage = getDemoStorage();
+      storage?.setItem(STORAGE_KEY, JSON.stringify(jobs));
     }
   }, [jobs, isInitialized]);
 

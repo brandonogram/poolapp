@@ -52,7 +52,7 @@ export default function Header() {
               </svg>
             </div>
             <span className={`text-xl font-bold ${scrolled ? 'text-navy-500' : 'text-navy-500'}`}>
-              Pool App
+              PoolOps
             </span>
           </Link>
 

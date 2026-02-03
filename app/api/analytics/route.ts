@@ -1,5 +1,5 @@
 /**
- * Pool App - Analytics API
+ * PoolOps - Analytics API
  * GET: Retrieve current metrics
  * POST: Log events (page views, events, conversions)
  */

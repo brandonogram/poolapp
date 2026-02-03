@@ -1,5 +1,5 @@
 /**
- * Pool App - Analytics Improvements Database
+ * PoolOps - Analytics Improvements Database
  * Logic for suggesting improvements based on metrics and A/B test tracking
  */
 

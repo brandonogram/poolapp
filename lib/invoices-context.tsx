@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
+import { getDemoStorage } from './demo-session';
 
 export interface LineItem {
   id: string;
@@ -313,9 +314,10 @@ export function InvoicesProvider({ children }: { children: ReactNode }) {
   const [invoices, setInvoices] = useState<Invoice[]>(initialInvoices);
   const [isLoaded, setIsLoaded] = useState(false);
 
-  // Load from localStorage on mount
+  // Load from storage on mount
   useEffect(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
+    const storage = getDemoStorage();
+    const saved = storage?.getItem(STORAGE_KEY);
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
@@ -327,10 +329,11 @@ export function InvoicesProvider({ children }: { children: ReactNode }) {
     setIsLoaded(true);
   }, []);
 
-  // Save to localStorage on change
+  // Save to storage on change
   useEffect(() => {
     if (isLoaded) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(invoices));
+      const storage = getDemoStorage();
+      storage?.setItem(STORAGE_KEY, JSON.stringify(invoices));
     }
   }, [invoices, isLoaded]);
 

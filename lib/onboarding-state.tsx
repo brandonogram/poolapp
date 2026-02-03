@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { getDemoStorage } from './demo-session';
 
 // Types for the onboarding state
 export interface BusinessInfo {
@@ -117,9 +118,10 @@ export function NewUserOnboardingProvider({ children }: { children: ReactNode })
   const [state, setState] = useState<NewUserOnboardingState>(defaultState);
   const [isLoaded, setIsLoaded] = useState(false);
 
-  // Load from localStorage on mount
+  // Load from storage on mount
   useEffect(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
+    const storage = getDemoStorage();
+    const saved = storage?.getItem(STORAGE_KEY);
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
@@ -131,10 +133,11 @@ export function NewUserOnboardingProvider({ children }: { children: ReactNode })
     setIsLoaded(true);
   }, []);
 
-  // Save to localStorage on change
+  // Save to storage on change
   useEffect(() => {
     if (isLoaded) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      const storage = getDemoStorage();
+      storage?.setItem(STORAGE_KEY, JSON.stringify(state));
     }
   }, [state, isLoaded]);
 
@@ -244,7 +247,8 @@ export function NewUserOnboardingProvider({ children }: { children: ReactNode })
   };
 
   const resetOnboarding = () => {
-    localStorage.removeItem(STORAGE_KEY);
+    const storage = getDemoStorage();
+    storage?.removeItem(STORAGE_KEY);
     setState(defaultState);
   };
 

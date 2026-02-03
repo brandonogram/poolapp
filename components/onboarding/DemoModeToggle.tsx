@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { getDemoMode, removeDemoSessionData, setDemoMode } from '@/lib/demo-session';
 
 interface DemoModeToggleProps {
   className?: string;
@@ -13,8 +14,7 @@ export default function DemoModeToggle({ className = '', onModeChange }: DemoMod
   const [showConfirmation, setShowConfirmation] = useState(false);
 
   useEffect(() => {
-    const demoMode = localStorage.getItem('poolapp-demo-mode');
-    setIsDemoMode(demoMode === 'true');
+    setIsDemoMode(getDemoMode());
   }, []);
 
   const handleToggle = () => {
@@ -24,7 +24,7 @@ export default function DemoModeToggle({ className = '', onModeChange }: DemoMod
     } else {
       // Switching to demo mode
       setIsDemoMode(true);
-      localStorage.setItem('poolapp-demo-mode', 'true');
+      setDemoMode(true);
       onModeChange?.(true);
       // Refresh to load demo data
       window.location.reload();
@@ -33,7 +33,17 @@ export default function DemoModeToggle({ className = '', onModeChange }: DemoMod
 
   const confirmFreshStart = () => {
     setIsDemoMode(false);
-    localStorage.setItem('poolapp-demo-mode', 'false');
+    removeDemoSessionData([
+      'poolapp_customers',
+      'poolapp-technicians',
+      'poolapp-schedule',
+      'poolapp-routes',
+      'poolapp-invoices',
+      'poolapp-checklist',
+      'poolapp-checklist-dismissed',
+      'poolapp-onboarding',
+    ]);
+    setDemoMode(false);
     setShowConfirmation(false);
     onModeChange?.(false);
     // Refresh to clear demo data
@@ -93,7 +103,7 @@ export default function DemoModeToggle({ className = '', onModeChange }: DemoMod
             onClick={() => {
               if (isDemoMode) return;
               setIsDemoMode(true);
-              localStorage.setItem('poolapp-demo-mode', 'true');
+              setDemoMode(true);
               onModeChange?.(true);
               window.location.reload();
             }}
@@ -167,14 +177,27 @@ export function useDemoMode() {
   const [isDemoMode, setIsDemoMode] = useState(false);
 
   useEffect(() => {
-    const demoMode = localStorage.getItem('poolapp-demo-mode');
-    setIsDemoMode(demoMode === 'true');
+    setIsDemoMode(getDemoMode());
   }, []);
 
   const toggleDemoMode = () => {
     const newValue = !isDemoMode;
     setIsDemoMode(newValue);
-    localStorage.setItem('poolapp-demo-mode', newValue.toString());
+    if (newValue) {
+      setDemoMode(true);
+    } else {
+      removeDemoSessionData([
+        'poolapp_customers',
+        'poolapp-technicians',
+        'poolapp-schedule',
+        'poolapp-routes',
+        'poolapp-invoices',
+        'poolapp-checklist',
+        'poolapp-checklist-dismissed',
+        'poolapp-onboarding',
+      ]);
+      setDemoMode(false);
+    }
     window.location.reload();
   };
 

@@ -55,7 +55,7 @@ export default function OnboardingLayout({
                   />
                 </svg>
               </div>
-              <span className="text-xl font-bold text-slate-900">Pool App</span>
+              <span className="text-xl font-bold text-slate-900">PoolOps</span>
             </motion.div>
 
             {/* Help link */}
@@ -90,7 +90,7 @@ export default function OnboardingLayout({
         <footer className="relative z-10 border-t border-slate-100 bg-white/50 mt-auto">
           <div className="max-w-6xl mx-auto px-6 py-4">
             <div className="flex items-center justify-between text-sm text-slate-500">
-              <span>Pool App - Route optimization for pool pros</span>
+              <span>PoolOps - Route optimization for pool pros</span>
               <div className="flex items-center gap-4">
                 <a href="#" className="hover:text-slate-700">
                   Privacy

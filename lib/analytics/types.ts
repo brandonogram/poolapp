@@ -1,5 +1,5 @@
 /**
- * Pool App - Analytics Types
+ * PoolOps - Analytics Types
  * Type definitions for the internal analytics monitoring system
  */
 

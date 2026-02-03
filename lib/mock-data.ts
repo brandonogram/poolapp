@@ -1,4 +1,4 @@
-// Mock data for Pool App dashboard
+// Mock data for PoolOps dashboard
 
 export interface Technician {
   id: string;

@@ -1,5 +1,5 @@
 /**
- * Pool App - Analytics Storage
+ * PoolOps - Analytics Storage
  * File-based storage for analytics data with Supabase fallback option
  */
 

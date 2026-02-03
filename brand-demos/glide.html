@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Glide Pools - Effortless Pool Service</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'glide': {
+                            50: '#ecfeff',
+                            100: '#cffafe',
+                            200: '#a5f3fc',
+                            300: '#67e8f9',
+                            400: '#22d3ee',
+                            500: '#06b6d4',
+                            600: '#0891b2',
+                            700: '#0e7490',
+                            800: '#155e75',
+                            900: '#164e63',
+                        },
+                        'warm': {
+                            50: '#fff7ed',
+                            100: '#ffedd5',
+                            200: '#fed7aa',
+                            300: '#fdba74',
+                            400: '#fb923c',
+                            500: '#f97316',
+                        }
+                    },
+                    fontFamily: {
+                        'sans': ['Plus Jakarta Sans', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .gradient-glide {
+            background: linear-gradient(135deg, #0891b2 0%, #22d3ee 50%, #67e8f9 100%);
+        }
+        .wave-bg {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 320'%3E%3Cpath fill='%2306b6d4' fill-opacity='0.05' d='M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,122.7C672,117,768,139,864,154.7C960,171,1056,181,1152,165.3C1248,149,1344,107,1392,85.3L1440,64L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z'%3E%3C/path%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: bottom;
+            background-size: cover;
+        }
+        .float {
+            animation: float 6s ease-in-out infinite;
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+        .card-glow:hover {
+            box-shadow: 0 0 40px rgba(6, 182, 212, 0.15);
+        }
+    </style>
+</head>
+<body class="bg-white overflow-x-hidden">
+    <!-- Navigation -->
+    <nav class="fixed top-0 w-full bg-white/90 backdrop-blur-md z-50">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <svg class="w-10 h-10 text-glide-500" viewBox="0 0 40 40" fill="none">
+                    <circle cx="20" cy="20" r="18" stroke="currentColor" stroke-width="2.5" fill="none"/>
+                    <path d="M12 20 Q20 12, 28 20 Q20 28, 12 20" fill="currentColor" opacity="0.3"/>
+                    <path d="M14 20 Q20 14, 26 20" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+                </svg>
+                <span class="font-extrabold text-2xl text-gray-900">glide<span class="text-glide-500">pools</span></span>
+            </div>
+            <div class="hidden md:flex items-center gap-8">
+                <a href="#" class="text-gray-600 hover:text-gray-900 font-medium">Features</a>
+                <a href="#" class="text-gray-600 hover:text-gray-900 font-medium">Pricing</a>
+                <a href="#" class="text-gray-600 hover:text-gray-900 font-medium">Stories</a>
+                <a href="#" class="text-glide-600 font-semibold">Sign in</a>
+                <a href="#" class="gradient-glide text-white px-6 py-2.5 rounded-full font-semibold hover:opacity-90 transition-opacity shadow-lg shadow-glide-500/25">Try Free</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="pt-32 pb-24 px-6 wave-bg min-h-screen flex items-center">
+        <div class="max-w-7xl mx-auto">
+            <div class="grid lg:grid-cols-2 gap-16 items-center">
+                <div>
+                    <div class="inline-flex items-center gap-2 bg-glide-50 text-glide-700 px-5 py-2.5 rounded-full text-sm font-semibold mb-8">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                        </svg>
+                        Effortless pool service management
+                    </div>
+                    <h1 class="text-5xl lg:text-7xl font-extrabold text-gray-900 leading-[1.1] mb-8">
+                        Let your<br/>
+                        business<br/>
+                        <span class="text-transparent bg-clip-text gradient-glide">glide.</span>
+                    </h1>
+                    <p class="text-xl text-gray-600 mb-10 leading-relaxed max-w-lg">
+                        Smooth routes. Effortless operations. Glide through your day with AI-optimized routes and chemistry tracking that just works.
+                    </p>
+                    <div class="flex flex-col sm:flex-row gap-4">
+                        <a href="#" class="gradient-glide text-white px-8 py-4 rounded-full font-bold text-lg hover:opacity-90 transition-opacity shadow-xl shadow-glide-500/30 text-center">
+                            Start Gliding Free
+                        </a>
+                        <a href="#" class="bg-gray-100 text-gray-700 px-8 py-4 rounded-full font-bold text-lg hover:bg-gray-200 transition-colors text-center flex items-center justify-center gap-2">
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"/>
+                            </svg>
+                            See it in action
+                        </a>
+                    </div>
+                </div>
+                <div class="relative">
+                    <div class="absolute -top-10 -right-10 w-72 h-72 bg-glide-200 rounded-full blur-3xl opacity-40"></div>
+                    <div class="absolute -bottom-10 -left-10 w-72 h-72 bg-warm-200 rounded-full blur-3xl opacity-40"></div>
+                    <div class="relative float">
+                        <div class="bg-white rounded-3xl shadow-2xl p-8 border border-gray-100">
+                            <div class="flex items-center gap-4 mb-6">
+                                <div class="w-12 h-12 gradient-glide rounded-2xl flex items-center justify-center">
+                                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <div class="text-sm text-gray-500">Today's savings</div>
+                                    <div class="text-2xl font-bold text-gray-900">$47.20</div>
+                                </div>
+                            </div>
+                            <div class="space-y-4">
+                                <div class="flex items-center justify-between p-4 bg-glide-50 rounded-2xl">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-10 h-10 bg-glide-500 rounded-xl flex items-center justify-center text-white text-sm font-bold">38%</div>
+                                        <span class="font-medium text-gray-900">Less driving</span>
+                                    </div>
+                                    <span class="text-glide-600 font-semibold">-23 miles</span>
+                                </div>
+                                <div class="flex items-center justify-between p-4 bg-warm-50 rounded-2xl">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-10 h-10 bg-warm-500 rounded-xl flex items-center justify-center text-white text-sm font-bold">2h</div>
+                                        <span class="font-medium text-gray-900">Time saved</span>
+                                    </div>
+                                    <span class="text-warm-600 font-semibold">+4 stops</span>
+                                </div>
+                                <div class="flex items-center justify-between p-4 bg-green-50 rounded-2xl">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-10 h-10 bg-green-500 rounded-xl flex items-center justify-center text-white">
+                                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                            </svg>
+                                        </div>
+                                        <span class="font-medium text-gray-900">Chemistry OK</span>
+                                    </div>
+                                    <span class="text-green-600 font-semibold">All clear</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Social Proof -->
+    <section class="py-16 px-6 bg-gray-50">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center mb-10">
+                <p class="text-gray-500 font-medium">Trusted by pool pros who value their time</p>
+            </div>
+            <div class="flex flex-wrap justify-center items-center gap-12 opacity-60">
+                <div class="text-2xl font-bold text-gray-400">Crystal Pools</div>
+                <div class="text-2xl font-bold text-gray-400">Blue Wave Services</div>
+                <div class="text-2xl font-bold text-gray-400">Aqua Pro</div>
+                <div class="text-2xl font-bold text-gray-400">Clear Choice</div>
+                <div class="text-2xl font-bold text-gray-400">Pool Masters</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features -->
+    <section class="py-24 px-6">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl lg:text-5xl font-extrabold text-gray-900 mb-6">Smooth operations,<br/>happy customers</h2>
+                <p class="text-xl text-gray-600 max-w-2xl mx-auto">Everything flows when you have the right tools. Glide makes pool service feel effortless.</p>
+            </div>
+            <div class="grid md:grid-cols-3 gap-8">
+                <div class="card-glow bg-white rounded-3xl p-8 border border-gray-100 transition-all">
+                    <div class="w-16 h-16 gradient-glide rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-glide-500/20">
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-2xl font-bold text-gray-900 mb-4">Effortless routes</h3>
+                    <p class="text-gray-600 leading-relaxed text-lg">AI sequences your stops perfectly. No more zigzagging. Just smooth, logical routes that save hours every week.</p>
+                </div>
+                <div class="card-glow bg-white rounded-3xl p-8 border border-gray-100 transition-all">
+                    <div class="w-16 h-16 bg-gradient-to-br from-warm-400 to-warm-500 rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-warm-500/20">
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-2xl font-bold text-gray-900 mb-4">Chemistry on autopilot</h3>
+                    <p class="text-gray-600 leading-relaxed text-lg">Track readings, spot trends, get alerts before problems happen. No more surprise callbacks or green pools.</p>
+                </div>
+                <div class="card-glow bg-white rounded-3xl p-8 border border-gray-100 transition-all">
+                    <div class="w-16 h-16 bg-gradient-to-br from-violet-400 to-violet-500 rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-violet-500/20">
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-2xl font-bold text-gray-900 mb-4">Works anywhere</h3>
+                    <p class="text-gray-600 leading-relaxed text-lg">Full offline mode means your app works in every backyard. Gate codes, history, calculator — all there, no signal needed.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonial -->
+    <section class="py-24 px-6 bg-glide-900">
+        <div class="max-w-4xl mx-auto text-center">
+            <svg class="w-12 h-12 text-glide-400 mx-auto mb-8" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z"/>
+            </svg>
+            <p class="text-3xl lg:text-4xl text-white font-medium leading-relaxed mb-8">
+                "Glide changed everything. My techs finish earlier, customers are happier, and I actually have evenings free now. It just... flows."
+            </p>
+            <div class="flex items-center justify-center gap-4">
+                <div class="w-14 h-14 bg-glide-700 rounded-full flex items-center justify-center text-white font-bold text-xl">MR</div>
+                <div class="text-left">
+                    <div class="text-white font-semibold">Mike Rodriguez</div>
+                    <div class="text-glide-300">Crystal Clear Pool Service, Arizona</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing -->
+    <section class="py-24 px-6">
+        <div class="max-w-4xl mx-auto">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl lg:text-5xl font-extrabold text-gray-900 mb-6">Simple pricing.<br/>Smooth value.</h2>
+                <p class="text-xl text-gray-600">One plan. Everything included. No surprises.</p>
+            </div>
+            <div class="bg-white rounded-3xl shadow-2xl border border-gray-100 overflow-hidden">
+                <div class="gradient-glide p-8 text-center text-white">
+                    <div class="text-lg font-semibold opacity-80 mb-2">Everything you need</div>
+                    <div class="flex items-baseline justify-center gap-2">
+                        <span class="text-6xl font-extrabold">$79</span>
+                        <span class="text-xl opacity-80">/month</span>
+                    </div>
+                </div>
+                <div class="p-8">
+                    <div class="grid md:grid-cols-2 gap-4 mb-8">
+                        <div class="flex items-center gap-3">
+                            <div class="w-6 h-6 bg-glide-100 rounded-full flex items-center justify-center">
+                                <svg class="w-4 h-4 text-glide-600" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                </svg>
+                            </div>
+                            <span class="text-gray-700">Up to 3 technicians</span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <div class="w-6 h-6 bg-glide-100 rounded-full flex items-center justify-center">
+                                <svg class="w-4 h-4 text-glide-600" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                </svg>
+                            </div>
+                            <span class="text-gray-700">Up to 200 pools</span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <div class="w-6 h-6 bg-glide-100 rounded-full flex items-center justify-center">
+                                <svg class="w-4 h-4 text-glide-600" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                </svg>
+                            </div>
+                            <span class="text-gray-700">AI route optimization</span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <div class="w-6 h-6 bg-glide-100 rounded-full flex items-center justify-center">
+                                <svg class="w-4 h-4 text-glide-600" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                </svg>
+                            </div>
+                            <span class="text-gray-700">Chemistry tracking</span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <div class="w-6 h-6 bg-glide-100 rounded-full flex items-center justify-center">
+                                <svg class="w-4 h-4 text-glide-600" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                </svg>
+                            </div>
+                            <span class="text-gray-700">Offline mobile app</span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <div class="w-6 h-6 bg-glide-100 rounded-full flex items-center justify-center">
+                                <svg class="w-4 h-4 text-glide-600" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                </svg>
+                            </div>
+                            <span class="text-gray-700">Same-day invoicing</span>
+                        </div>
+                    </div>
+                    <a href="#" class="block w-full gradient-glide text-white py-4 rounded-2xl font-bold text-lg hover:opacity-90 transition-opacity text-center shadow-lg shadow-glide-500/25">
+                        Start Your Free Trial
+                    </a>
+                    <p class="text-center text-gray-500 mt-4 text-sm">14 days free • No credit card required</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Final CTA -->
+    <section class="py-24 px-6 bg-gray-50">
+        <div class="max-w-3xl mx-auto text-center">
+            <h2 class="text-4xl lg:text-5xl font-extrabold text-gray-900 mb-6">Ready to glide?</h2>
+            <p class="text-xl text-gray-600 mb-10">Join hundreds of pool pros who've discovered the effortless way to run their business.</p>
+            <a href="#" class="inline-block gradient-glide text-white px-10 py-5 rounded-full font-bold text-xl hover:opacity-90 transition-opacity shadow-xl shadow-glide-500/30">
+                Start Gliding Free
+            </a>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-gray-400 py-12 px-6">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
+            <div class="flex items-center gap-2">
+                <svg class="w-8 h-8 text-glide-500" viewBox="0 0 40 40" fill="none">
+                    <circle cx="20" cy="20" r="18" stroke="currentColor" stroke-width="2.5" fill="none"/>
+                    <path d="M14 20 Q20 14, 26 20" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+                </svg>
+                <span class="font-extrabold text-xl text-white">glidepools</span>
+            </div>
+            <div class="flex gap-8 text-sm">
+                <a href="#" class="hover:text-white transition-colors">Features</a>
+                <a href="#" class="hover:text-white transition-colors">Pricing</a>
+                <a href="#" class="hover:text-white transition-colors">Stories</a>
+                <a href="#" class="hover:text-white transition-colors">Support</a>
+            </div>
+            <div class="text-sm">© 2026 Glide Pools. Flow with it.</div>
+        </div>
+    </footer>
+</body>
+</html>

@@ -1,7 +1,7 @@
 /**
  * A/B Testing Framework
  *
- * Simple A/B testing system for PoolApp.
+ * Simple A/B testing system for PoolOps.
  * Handles variant selection, results tracking, and winner determination.
  */
 

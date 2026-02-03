@@ -163,7 +163,7 @@ export default function ROICalculator() {
                   </svg>
                 </div>
                 <div>
-                  <p className="text-cyan-200 text-sm font-medium">With Pool App, you could save</p>
+                  <p className="text-cyan-200 text-sm font-medium">With PoolOps, you could save</p>
                   <p className="text-3xl md:text-4xl font-bold text-white font-mono">
                     $<AnimatedCounter value={totalOpportunity} /><span className="text-lg">/year</span>
                   </p>

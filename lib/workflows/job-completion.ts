@@ -1,6 +1,6 @@
 // @ts-nocheck
 /**
- * Pool App - Job Completion Workflow
+ * PoolOps - Job Completion Workflow
  * Handles job status transitions, photo uploads, and job queue management
  * Note: @ts-nocheck used until Supabase types are fully configured
  */

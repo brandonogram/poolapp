@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { getDemoStorage } from '@/lib/demo-session';
 
 interface FeatureHintProps {
   id: string;
@@ -28,7 +29,8 @@ export default function FeatureHint({
 
   useEffect(() => {
     const storageKey = `poolapp-hint-${id}`;
-    const seen = localStorage.getItem(storageKey);
+    const storage = getDemoStorage();
+    const seen = storage?.getItem(storageKey);
 
     if (seen === 'true' && showOnce) {
       setHasBeenSeen(true);
@@ -48,7 +50,8 @@ export default function FeatureHint({
   const handleDismiss = () => {
     setIsVisible(false);
     if (showOnce) {
-      localStorage.setItem(`poolapp-hint-${id}`, 'true');
+      const storage = getDemoStorage();
+      storage?.setItem(`poolapp-hint-${id}`, 'true');
       setHasBeenSeen(true);
     }
   };
@@ -125,20 +128,25 @@ export default function FeatureHint({
 // Utility hook for programmatically controlling hints
 export function useFeatureHints() {
   const markHintSeen = (id: string) => {
-    localStorage.setItem(`poolapp-hint-${id}`, 'true');
+    const storage = getDemoStorage();
+    storage?.setItem(`poolapp-hint-${id}`, 'true');
   };
 
   const resetHint = (id: string) => {
-    localStorage.removeItem(`poolapp-hint-${id}`);
+    const storage = getDemoStorage();
+    storage?.removeItem(`poolapp-hint-${id}`);
   };
 
   const resetAllHints = () => {
-    const keys = Object.keys(localStorage).filter(k => k.startsWith('poolapp-hint-'));
-    keys.forEach(k => localStorage.removeItem(k));
+    const storage = getDemoStorage();
+    if (!storage) return;
+    const keys = Object.keys(storage).filter(k => k.startsWith('poolapp-hint-'));
+    keys.forEach(k => storage.removeItem(k));
   };
 
   const hasSeenHint = (id: string): boolean => {
-    return localStorage.getItem(`poolapp-hint-${id}`) === 'true';
+    const storage = getDemoStorage();
+    return storage?.getItem(`poolapp-hint-${id}`) === 'true';
   };
 
   return {

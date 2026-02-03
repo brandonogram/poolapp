@@ -5,7 +5,7 @@ import Container from '@/components/ui/Container'
 
 const testimonials = [
   {
-    quote: "Pool App cut our driving time by 40%. My techs are now servicing 5 more pools per day, which adds up to $2,000+ in extra revenue per week. The ROI was obvious within the first month.",
+    quote: "PoolOps cut our driving time by 40%. My techs are now servicing 5 more pools per day, which adds up to $2,000+ in extra revenue per week. The ROI was obvious within the first month.",
     author: "Mike Rodriguez",
     role: "Owner, AquaCare Pro",
     location: "Phoenix, AZ",
@@ -13,7 +13,7 @@ const testimonials = [
     stats: { pools: 180, techs: 4, saved: "$4,200/mo" },
   },
   {
-    quote: "Before Pool App, we were using paper routes and Google Maps. Now route planning takes 5 minutes instead of 2 hours. My wife actually sees me for dinner now.",
+    quote: "Before PoolOps, we were using paper routes and Google Maps. Now route planning takes 5 minutes instead of 2 hours. My wife actually sees me for dinner now.",
     author: "David Chen",
     role: "Founder, Crystal Clear Pools",
     location: "San Diego, CA",
@@ -45,7 +45,7 @@ export default function Testimonials() {
             Testimonials
           </span>
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-navy-500 mb-4">
-            Pool pros love Pool App
+            Pool pros love PoolOps
           </h2>
           <p className="text-lg text-slate-600 max-w-2xl mx-auto">
             Join 500+ pool service companies who have transformed their operations

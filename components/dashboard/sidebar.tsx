@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { ReactNode, useState, useEffect } from 'react';
 import { DemoModeToggle } from '@/components/onboarding';
+import { getDemoStorage } from '@/lib/demo-session';
 
 interface NavItem {
   name: string;
@@ -115,7 +116,8 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
   // Check if onboarding is complete to show demo mode toggle
   useEffect(() => {
-    const onboardingComplete = localStorage.getItem('poolapp-onboarding-complete');
+    const storage = getDemoStorage();
+    const onboardingComplete = storage?.getItem('poolapp-onboarding-complete');
     setShowDemoToggle(onboardingComplete === 'true');
   }, []);
 
@@ -154,7 +156,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
               </svg>
             </div>
             <div>
-              <h1 className="text-lg font-bold text-white">Pool App</h1>
+              <h1 className="text-lg font-bold text-white">PoolOps</h1>
               <p className="text-xs text-navy-200 dark:text-slate-400">Route Optimization</p>
             </div>
             {/* Mobile close button */}

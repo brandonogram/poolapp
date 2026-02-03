@@ -63,7 +63,7 @@ export default function ServiceEntryPage() {
   const params = useParams();
   const stopId = params.id as string;
 
-  const { route, completeStop, getCurrentStop, getUpcomingStops } = useTech();
+  const { route, completeStop, getCurrentStop, getUpcomingStops, isOnline, pendingSync, skipStop } = useTech();
 
   // Find the stop
   const stop = route.stops.find(s => s.id === stopId);
@@ -127,6 +127,33 @@ export default function ServiceEntryPage() {
     router.push('/tech/route');
   };
 
+  const handleQuickComplete = () => {
+    const quickTasks = {
+      skim: true,
+      brush: true,
+      vacuum: false,
+      baskets: true,
+      filter: false,
+      equipment: false,
+    };
+    setTasks(quickTasks);
+    completeStop(stopId, {
+      chemistry,
+      tasks: quickTasks,
+      chemicalsAdded,
+      photos,
+      notes,
+    });
+    router.push('/tech/route');
+  };
+
+  const handleSkip = () => {
+    const reason = window.prompt('Why are you skipping this stop?') || '';
+    if (!reason.trim()) return;
+    skipStop(stopId, reason.trim());
+    router.push('/tech/route');
+  };
+
   const handlePhotoCapture = () => {
     // In a real app, this would open the camera
     // For demo, we simulate adding a photo
@@ -148,6 +175,12 @@ export default function ServiceEntryPage() {
         >
           <BackIcon className="w-6 h-6" aria-hidden="true" />
           Back
+        </button>
+        <button
+          onClick={handleSkip}
+          className="text-sm font-semibold text-amber-700 dark:text-amber-300 px-3 py-2 rounded-lg border border-amber-200 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/30"
+        >
+          Skip
         </button>
       </div>
 
@@ -235,6 +268,18 @@ export default function ServiceEntryPage() {
         </div>
       </div>
 
+      {/* Offline Notice */}
+      {!isOnline && (
+        <div className="bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700 rounded-2xl p-4 mb-4 text-sm text-amber-800 dark:text-amber-200">
+          You are offline. This service entry will be saved and synced when you&apos;re back online.
+        </div>
+      )}
+      {isOnline && pendingSync > 0 && (
+        <div className="bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 rounded-2xl p-4 mb-4 text-sm text-blue-800 dark:text-blue-200">
+          Syncing {pendingSync} saved {pendingSync === 1 ? 'entry' : 'entries'}...
+        </div>
+      )}
+
       {/* Recommended Dosing */}
       <div className={`rounded-2xl p-4 mb-4 transition-colors ${dosing[0].chemical === 'None needed' ? 'bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-700' : 'bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700'}`}>
         <h3 className={`font-bold mb-3 flex items-center gap-2 ${dosing[0].chemical === 'None needed' ? 'text-green-800 dark:text-green-200' : 'text-amber-800 dark:text-amber-200'}`}>
@@ -289,6 +334,12 @@ export default function ServiceEntryPage() {
           )}
         </h2>
         <TaskChecklist tasks={tasks} onToggle={toggleTask} requiredTasks={requiredTasks} />
+        <button
+          onClick={handleQuickComplete}
+          className="mt-4 w-full py-3 rounded-xl bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 font-semibold active:scale-[0.99] transition-transform"
+        >
+          Quick Complete (Skim, Brush, Baskets)
+        </button>
       </div>
 
       {/* Photo Section */}

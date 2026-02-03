@@ -1,6 +1,6 @@
 // @ts-nocheck
 /**
- * Pool App - Supabase Client Setup
+ * PoolOps - Supabase Client Setup
  * Type-safe Supabase clients for browser and server environments
  * Note: @ts-nocheck used until Supabase is fully configured
  */

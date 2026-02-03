@@ -1,5 +1,5 @@
 /**
- * Google Analytics 4 Integration for PoolApp
+ * Google Analytics 4 Integration for PoolOps
  *
  * This module provides GA4 tracking functionality including:
  * - Page view tracking
@@ -81,7 +81,7 @@ export const trackEvent = (
 
 // ============================================
 // CONVERSION TRACKING
-// Marketing funnel events for PoolApp
+// Marketing funnel events for PoolOps
 // ============================================
 
 /**
@@ -143,7 +143,7 @@ export const trackCheckoutStart = (
       value: price,
       items: [{
         item_id: plan,
-        item_name: `PoolApp ${plan}`,
+        item_name: `PoolOps ${plan}`,
         price: price,
         quantity: 1,
       }],
@@ -174,7 +174,7 @@ export const trackPurchaseComplete = (
       currency,
       items: [{
         item_id: plan,
-        item_name: `PoolApp ${plan}`,
+        item_name: `PoolOps ${plan}`,
         price: price,
         quantity: 1,
       }],

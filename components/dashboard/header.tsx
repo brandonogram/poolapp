@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Avatar } from '@/components/ui';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { AccessibilitySettings } from '@/components/ui/accessibility-settings';
+import { getDemoMode, removeDemoSessionData, setDemoMode } from '@/lib/demo-session';
 
 interface HeaderProps {
   onMenuClick: () => void;
@@ -12,6 +13,7 @@ interface HeaderProps {
 export function Header({ onMenuClick }: HeaderProps) {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
+  const [isDemoMode, setIsDemoMode] = useState(false);
   const notificationRef = useRef<HTMLDivElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
 
@@ -68,6 +70,34 @@ export function Header({ onMenuClick }: HeaderProps) {
     document.addEventListener('keydown', handleEscape);
     return () => document.removeEventListener('keydown', handleEscape);
   }, []);
+
+  useEffect(() => {
+    setIsDemoMode(getDemoMode());
+  }, []);
+
+  const handleResetDemo = () => {
+    removeDemoSessionData([
+      'poolapp_customers',
+      'poolapp-technicians',
+      'poolapp-schedule',
+      'poolapp-routes',
+      'poolapp-invoices',
+      'poolapp-checklist',
+      'poolapp-checklist-dismissed',
+      'poolapp-onboarding',
+      'poolapp-onboarding-complete',
+      'poolapp-just-completed-onboarding',
+      'poolapp-business-info',
+      'poolapp-first-technician',
+      'poolapp-first-customer',
+      'poolops-tech-route',
+      'poolops-tech-current-stop',
+      'poolops-tech-queue',
+      'poolops-tech-history',
+    ]);
+    setDemoMode(true);
+    window.location.reload();
+  };
 
   return (
     <header className="sticky top-0 z-30 bg-white dark:bg-surface-900 border-b border-slate-200 dark:border-surface-700 transition-colors">
@@ -136,6 +166,16 @@ export function Header({ onMenuClick }: HeaderProps) {
 
           {/* Accessibility Settings */}
           <AccessibilitySettings />
+
+          {isDemoMode && (
+            <button
+              onClick={handleResetDemo}
+              className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-lg hover:bg-amber-100 transition-colors"
+              aria-label="Reset demo data"
+            >
+              Reset Demo
+            </button>
+          )}
 
           {/* Notifications */}
           <div className="relative" ref={notificationRef}>

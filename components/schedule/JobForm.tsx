@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button, Badge } from '@/components/ui';
 import { Job, useSchedule, formatTime } from '@/lib/schedule-context';
-import { customers } from '@/lib/mock-data';
+import { useCustomers } from '@/lib/customers-context';
 import { useTechnicians } from '@/lib/technicians-context';
 
 interface JobFormProps {
@@ -43,6 +43,7 @@ const DURATIONS = [
 
 export function JobForm({ isOpen, onClose, job, initialDate, initialTechId }: JobFormProps) {
   const { addJob, updateJob, deleteJob } = useSchedule();
+  const { customers } = useCustomers();
   const { getActiveTechnicians, getTechnicianById } = useTechnicians();
   const technicians = getActiveTechnicians();
 
@@ -112,7 +113,7 @@ export function JobForm({ isOpen, onClose, job, initialDate, initialTechId }: Jo
       serviceType,
       status: (job?.status || 'scheduled') as Job['status'],
       duration,
-      rate: customer.rate,
+      rate: Math.round(customer.monthlyRate / (customer.serviceFrequency === 'weekly' ? 4 : customer.serviceFrequency === 'bi-weekly' ? 2 : 1)),
       notes: notes || undefined,
     };
 
@@ -217,7 +218,7 @@ export function JobForm({ isOpen, onClose, job, initialDate, initialTechId }: Jo
                   </select>
                   {selectedCustomer && (
                     <p className="mt-1.5 text-sm text-slate-500">
-                      {selectedCustomer.city} | ${selectedCustomer.rate}/service
+                      {selectedCustomer.city}
                     </p>
                   )}
                 </div>

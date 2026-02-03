@@ -1,6 +1,7 @@
 'use client';
 
-import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useCallback, ReactNode, useEffect } from 'react';
+import { getDemoStorage } from './demo-session';
 
 // Types for Tech App
 export interface TechStop {
@@ -43,6 +44,19 @@ export interface ServiceEntry {
   completedAt?: string;
 }
 
+export interface ServiceHistoryItem {
+  id: string;
+  date: string;
+  time: string;
+  customer: string;
+  chemistry: ChemistryReading;
+  status: 'completed' | 'skipped';
+  reason?: string;
+  tasksSummary?: string;
+  photosCount?: number;
+  notes?: string;
+}
+
 export interface TechRoute {
   date: string;
   techName: string;
@@ -58,6 +72,8 @@ interface TechContextType {
   currentStopId: string | null;
   isOnline: boolean;
   pendingSync: number;
+  queuedEntries: ServiceEntry[];
+  serviceHistory: ServiceHistoryItem[];
   getCurrentStop: () => TechStop | null;
   getUpcomingStops: () => TechStop[];
   getCompletedStops: () => TechStop[];
@@ -275,6 +291,96 @@ export function TechProvider({ children }: { children: ReactNode }) {
   const [currentStopId, setCurrentStopId] = useState<string | null>('stop-11');
   const [isOnline, setIsOnline] = useState(true);
   const [pendingSync, setPendingSync] = useState(0);
+  const [queuedEntries, setQueuedEntries] = useState<ServiceEntry[]>([]);
+  const [serviceHistory, setServiceHistory] = useState<ServiceHistoryItem[]>([]);
+
+  const ROUTE_KEY = 'poolops-tech-route';
+  const STOP_KEY = 'poolops-tech-current-stop';
+  const QUEUE_KEY = 'poolops-tech-queue';
+  const HISTORY_KEY = 'poolops-tech-history';
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const storage = getDemoStorage();
+    const storedRoute = storage?.getItem(ROUTE_KEY);
+    const storedStop = storage?.getItem(STOP_KEY);
+    const storedQueue = storage?.getItem(QUEUE_KEY);
+    const storedHistory = storage?.getItem(HISTORY_KEY);
+
+    if (storedRoute) {
+      try {
+        const parsedRoute = JSON.parse(storedRoute) as TechRoute;
+        setRoute(parsedRoute);
+      } catch (e) {
+        console.error('Failed to parse stored tech route:', e);
+      }
+    }
+
+    if (storedStop) {
+      setCurrentStopId(storedStop);
+    }
+
+    if (storedQueue) {
+      try {
+        const parsedQueue = JSON.parse(storedQueue) as ServiceEntry[];
+        setQueuedEntries(parsedQueue);
+        setPendingSync(parsedQueue.length);
+      } catch (e) {
+        console.error('Failed to parse stored tech queue:', e);
+      }
+    }
+
+    if (storedHistory) {
+      try {
+        const parsedHistory = JSON.parse(storedHistory) as ServiceHistoryItem[];
+        setServiceHistory(parsedHistory);
+      } catch (e) {
+        console.error('Failed to parse stored tech history:', e);
+      }
+    }
+
+    setIsOnline(navigator.onLine);
+  }, []);
+
+  useEffect(() => {
+    const storage = getDemoStorage();
+    storage?.setItem(ROUTE_KEY, JSON.stringify(route));
+  }, [route]);
+
+  useEffect(() => {
+    const storage = getDemoStorage();
+    if (currentStopId) {
+      storage?.setItem(STOP_KEY, currentStopId);
+    } else {
+      storage?.removeItem(STOP_KEY);
+    }
+  }, [currentStopId]);
+
+  useEffect(() => {
+    const storage = getDemoStorage();
+    storage?.setItem(QUEUE_KEY, JSON.stringify(queuedEntries));
+    setPendingSync(queuedEntries.length);
+  }, [queuedEntries]);
+
+  useEffect(() => {
+    const storage = getDemoStorage();
+    storage?.setItem(HISTORY_KEY, JSON.stringify(serviceHistory));
+  }, [serviceHistory]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
 
   const getCurrentStop = useCallback(() => {
     return route.stops.find(s => s.id === currentStopId) || null;
@@ -303,6 +409,27 @@ export function TechProvider({ children }: { children: ReactNode }) {
   const completeStop = useCallback((stopId: string, entry: Omit<ServiceEntry, 'stopId' | 'completedAt'>) => {
     const stopIndex = route.stops.findIndex(s => s.id === stopId);
     const nextStop = route.stops[stopIndex + 1];
+    const stop = route.stops[stopIndex];
+    const completedEntry: ServiceEntry = {
+      stopId,
+      ...entry,
+      completedAt: new Date().toISOString(),
+    };
+    const completedAt = completedEntry.completedAt || new Date().toISOString();
+    const completedTasks = Object.entries(entry.tasks)
+      .filter(([, value]) => value)
+      .map(([key]) => key.charAt(0).toUpperCase() + key.slice(1));
+    const historyItem: ServiceHistoryItem = {
+      id: `history-${stopId}-${completedAt}`,
+      date: new Date(completedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      time: new Date(completedAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
+      customer: stop?.customerName || 'Unknown',
+      chemistry: entry.chemistry,
+      status: 'completed',
+      tasksSummary: completedTasks.length > 0 ? completedTasks.join(', ') : 'None',
+      photosCount: entry.photos.length,
+      notes: entry.notes,
+    };
 
     setRoute(prev => ({
       ...prev,
@@ -324,14 +451,26 @@ export function TechProvider({ children }: { children: ReactNode }) {
       setCurrentStopId(null);
     }
 
-    if (!isOnline) {
-      setPendingSync(prev => prev + 1);
-    }
-  }, [route.stops, isOnline]);
+    setQueuedEntries(prev => [...prev, completedEntry]);
+    setServiceHistory(prev => [historyItem, ...prev].slice(0, 50));
+  }, [route.stops]);
 
   const skipStop = useCallback((stopId: string, reason: string) => {
     const stopIndex = route.stops.findIndex(s => s.id === stopId);
     const nextStop = route.stops[stopIndex + 1];
+    const stop = route.stops[stopIndex];
+    const skippedAt = new Date().toISOString();
+    const historyItem: ServiceHistoryItem = {
+      id: `history-${stopId}-${skippedAt}`,
+      date: new Date(skippedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      time: new Date(skippedAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
+      customer: stop?.customerName || 'Unknown',
+      chemistry: { pH: 0, chlorine: 0, alkalinity: 0 },
+      status: 'skipped',
+      reason,
+      tasksSummary: 'Skipped',
+      photosCount: 0,
+    };
 
     setRoute(prev => ({
       ...prev,
@@ -351,15 +490,30 @@ export function TechProvider({ children }: { children: ReactNode }) {
     } else {
       setCurrentStopId(null);
     }
+    setServiceHistory(prev => [historyItem, ...prev].slice(0, 50));
   }, [route.stops]);
+
+  const flushQueue = useCallback(() => {
+    if (queuedEntries.length === 0) return;
+    setPendingSync(queuedEntries.length);
+    setTimeout(() => {
+      setQueuedEntries([]);
+      setPendingSync(0);
+    }, 1200);
+  }, [queuedEntries]);
+
+  useEffect(() => {
+    if (isOnline) {
+      flushQueue();
+    }
+  }, [isOnline, flushQueue]);
 
   const setOnline = useCallback((online: boolean) => {
     setIsOnline(online);
-    if (online && pendingSync > 0) {
-      // Simulate sync
-      setTimeout(() => setPendingSync(0), 1500);
+    if (online) {
+      flushQueue();
     }
-  }, [pendingSync]);
+  }, [flushQueue]);
 
   return (
     <TechContext.Provider
@@ -368,6 +522,8 @@ export function TechProvider({ children }: { children: ReactNode }) {
         currentStopId,
         isOnline,
         pendingSync,
+        queuedEntries,
+        serviceHistory,
         getCurrentStop,
         getUpcomingStops,
         getCompletedStops,

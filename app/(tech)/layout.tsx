@@ -3,6 +3,7 @@
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { TechProvider, useTech } from '@/lib/tech-context';
+import { getDemoMode, removeDemoSessionData, setDemoMode } from '@/lib/demo-session';
 import { ThemeToggleCompact } from '@/components/ui/theme-toggle';
 import { AccessibilityQuickControls } from '@/components/ui/accessibility-settings';
 
@@ -76,6 +77,31 @@ function SyncStatus() {
 }
 
 function TechLayoutContent({ children }: { children: React.ReactNode }) {
+  const isDemoMode = getDemoMode();
+  const handleResetDemo = () => {
+    removeDemoSessionData([
+      'poolapp_customers',
+      'poolapp-technicians',
+      'poolapp-schedule',
+      'poolapp-routes',
+      'poolapp-invoices',
+      'poolapp-checklist',
+      'poolapp-checklist-dismissed',
+      'poolapp-onboarding',
+      'poolapp-onboarding-complete',
+      'poolapp-just-completed-onboarding',
+      'poolapp-business-info',
+      'poolapp-first-technician',
+      'poolapp-first-customer',
+      'poolops-tech-route',
+      'poolops-tech-current-stop',
+      'poolops-tech-queue',
+      'poolops-tech-history',
+    ]);
+    setDemoMode(true);
+    window.location.reload();
+  };
+
   return (
     <div className="min-h-screen bg-slate-100 dark:bg-surface-900 flex flex-col max-w-md mx-auto transition-colors">
       {/* Header */}
@@ -86,11 +112,20 @@ function TechLayoutContent({ children }: { children: React.ReactNode }) {
               <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
             </svg>
           </div>
-          <span className="font-bold text-slate-900 dark:text-slate-100 text-lg">PoolApp</span>
+          <span className="font-bold text-slate-900 dark:text-slate-100 text-lg">PoolOps</span>
         </div>
         <div className="flex items-center gap-2">
           <ThemeToggleCompact />
           <AccessibilityQuickControls />
+          {isDemoMode && (
+            <button
+              onClick={handleResetDemo}
+              className="inline-flex items-center px-3 py-2 text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-200 rounded-full"
+              aria-label="Reset demo data"
+            >
+              Reset Demo
+            </button>
+          )}
           <SyncStatus />
         </div>
       </header>

@@ -10,7 +10,7 @@ export default function QRPage() {
   useEffect(() => {
     // Use the deployed URL or fallback
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ||
-                    (typeof window !== 'undefined' ? window.location.origin : 'https://poolapp.vercel.app');
+                    (typeof window !== 'undefined' ? window.location.origin : 'https://poolops.io');
     setUrl(`${baseUrl}/convention`);
   }, []);
 
@@ -31,7 +31,7 @@ export default function QRPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
               </svg>
             </div>
-            <span className="text-2xl font-bold text-slate-900">Pool App</span>
+            <span className="text-2xl font-bold text-slate-900">PoolOps</span>
           </div>
           <h1 className="text-3xl font-bold text-slate-900 mb-2">Scan to Save $4K+/Year</h1>
           <p className="text-slate-600">Pool & Spa Show 2026 Exclusive</p>

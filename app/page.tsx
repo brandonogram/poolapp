@@ -39,11 +39,11 @@ function useCountdown() {
 // FAQ data - SEO optimized questions
 const faqs = [
   {
-    question: 'How long does it take to set up PoolApp?',
+    question: 'How long does it take to set up PoolOps?',
     answer: 'About 5 minutes. Import your customers from a spreadsheet, add your techs, and you\'re ready to go. Our setup wizard guides you through every step.',
   },
   {
-    question: 'Does PoolApp work with QuickBooks?',
+    question: 'Does PoolOps work with QuickBooks?',
     answer: 'QuickBooks integration is coming in Q2 2026! For now, you can export invoices as CSV. We\'re also building Xero and FreshBooks integrations.',
   },
   {
@@ -55,8 +55,8 @@ const faqs = [
     answer: 'Yes! Techs can log services, take photos, and complete stops even without signal. Everything syncs automatically when back online.',
   },
   {
-    question: 'What makes PoolApp different from Skimmer or Jobber?',
-    answer: 'PoolApp offers AI-powered route optimization, chemistry tracking, and all-in-one business management at a lower price point. No per-technician fees means predictable costs as you grow.',
+    question: 'What makes PoolOps different from Skimmer or Jobber?',
+    answer: 'PoolOps offers AI-powered route optimization, chemistry tracking, and all-in-one business management at a lower price point. No per-technician fees means predictable costs as you grow.',
   },
   {
     question: 'Is there a free trial for pool service software?',
@@ -172,10 +172,10 @@ export default function Home() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
               </svg>
             </div>
-            <span className="text-xl font-bold text-white">PoolApp</span>
+            <span className="text-xl font-bold text-white">PoolOps</span>
           </div>
           <Link
-            href="/login"
+            href="/demo"
             className="text-sm text-cyan-400 font-medium hover:text-cyan-300 transition-colors"
           >
             Try Demo
@@ -234,7 +234,7 @@ export default function Home() {
                 transition={{ delay: 0.2 }}
                 className="text-lg text-white/70 mb-6"
               >
-                PoolApp&apos;s AI-powered pool route optimization reduces drive time by 38%,
+                PoolOps&apos;s AI-powered pool route optimization reduces drive time by 38%,
                 enabling your techs to complete 4-6 additional stops daily. Smart pool service
                 software that pays for itself in week one.
               </motion.p>
@@ -301,7 +301,7 @@ export default function Home() {
                       <div className="w-3 h-3 rounded-full bg-yellow-500" />
                       <div className="w-3 h-3 rounded-full bg-green-500" />
                     </div>
-                    <div className="text-xs text-white/40">PoolApp Dashboard</div>
+                    <div className="text-xs text-white/40">PoolOps Dashboard</div>
                   </div>
 
                   {/* Mock Route Map */}
@@ -434,7 +434,7 @@ export default function Home() {
 
                 {/* Play Button */}
                 <Link
-                  href="/login"
+                  href="/demo"
                   className="relative z-10 flex flex-col items-center gap-4 group"
                 >
                   <div className="w-20 h-20 rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 flex items-center justify-center shadow-lg shadow-cyan-500/30 group-hover:scale-110 group-hover:shadow-cyan-500/50 transition-all">
@@ -518,7 +518,7 @@ export default function Home() {
                   </div>
                   <h3 className="text-2xl font-bold text-white mb-2">AI-Powered Pool Route Optimization</h3>
                   <p className="text-white/60 mb-4">
-                    Stop spending 2-3 hours every night planning routes. PoolApp&apos;s AI calculates the fastest path between pools,
+                    Stop spending 2-3 hours every night planning routes. PoolOps&apos;s AI calculates the fastest path between pools,
                     accounting for traffic, service times, and customer preferences. Pool service route planning has never been easier.
                   </p>
                   <div className="inline-flex items-center gap-2 text-lg font-bold text-cyan-400">
@@ -868,7 +868,7 @@ export default function Home() {
                 <div className="text-white font-bold">$50-100/mo</div>
               </div>
               <div>
-                <div className="text-cyan-400 text-sm mb-1 font-medium">PoolApp (All-in-One)</div>
+                <div className="text-cyan-400 text-sm mb-1 font-medium">PoolOps (All-in-One)</div>
                 <div className="text-cyan-400 font-bold">$59-79/mo</div>
               </div>
             </div>
@@ -945,7 +945,7 @@ export default function Home() {
             className="text-center text-white/50 text-sm mt-6"
           >
             More questions? Email us at{' '}
-            <a href="mailto:hello@poolapp.com" className="text-cyan-400 hover:underline">hello@poolapp.com</a>
+            <a href="mailto:hello@poolops.io" className="text-cyan-400 hover:underline">hello@poolops.io</a>
             {' '}or find us at booth #247
           </motion.p>
         </div>
@@ -985,7 +985,7 @@ export default function Home() {
               </h2>
 
               <p className="text-lg text-white/70 mb-8 max-w-xl mx-auto">
-                Pool service companies using PoolApp save an average of $4,000+ per year and 2 hours daily.
+                Pool service companies using PoolOps save an average of $4,000+ per year and 2 hours daily.
                 Join 500+ pool pros who are already working smarter.
               </p>
 
@@ -1041,7 +1041,7 @@ export default function Home() {
         <div className="max-w-4xl mx-auto text-center">
           <p className="text-white/60 mb-4">Want to explore the dashboard first?</p>
           <Link
-            href="/login"
+            href="/demo"
             className="inline-flex items-center gap-2 text-cyan-400 font-medium hover:text-cyan-300 transition-colors"
           >
             Try the interactive demo
@@ -1049,15 +1049,15 @@ export default function Home() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
           </Link>
-          <p className="text-white/40 text-sm mt-2">Login: demo@poolapp.com / demo123</p>
+          <p className="text-white/40 text-sm mt-2">Login: demo@poolops.io / demo123</p>
         </div>
       </section>
 
       {/* ==================== FOOTER ==================== */}
       <footer className="px-4 py-8 border-t border-white/10">
         <div className="max-w-4xl mx-auto text-center text-white/40 text-sm">
-          <p className="mb-2">Questions? Find us at booth #247 or email hello@poolapp.com</p>
-          <p>PoolApp 2026 - Pool service software for route optimization, chemistry tracking, and business management.</p>
+          <p className="mb-2">Questions? Find us at booth #247 or email hello@poolops.io</p>
+          <p>PoolOps 2026 - Pool service software for route optimization, chemistry tracking, and business management.</p>
         </div>
       </footer>
     </div>

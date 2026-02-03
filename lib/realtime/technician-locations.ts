@@ -1,7 +1,6 @@
 // @ts-nocheck
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
- * Pool App - Technician Location Tracking
+ * PoolOps - Technician Location Tracking
  * Real-time utilities for tracking technician positions
  * Note: @ts-nocheck used until Supabase types are fully configured
  */

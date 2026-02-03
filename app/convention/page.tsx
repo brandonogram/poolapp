@@ -146,7 +146,7 @@ export default function ConventionPage() {
             "availability": "https://schema.org/LimitedAvailability",
             "seller": {
               "@type": "Organization",
-              "name": "PoolApp"
+              "name": "PoolOps"
             }
           }),
         }}
@@ -161,7 +161,7 @@ export default function ConventionPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
               </svg>
             </div>
-            <span className="text-xl font-bold text-white">Pool App</span>
+            <span className="text-xl font-bold text-white">PoolOps</span>
           </Link>
           <div className="text-right">
             <div className="text-cyan-400 text-sm font-medium">Pool & Spa Show 2026</div>
@@ -404,7 +404,7 @@ export default function ConventionPage() {
         <div className="max-w-4xl mx-auto text-center">
           <p className="text-white/60 mb-4">Want to see it in action first?</p>
           <Link
-            href="/login"
+            href="/demo"
             className="inline-flex items-center gap-2 text-cyan-400 font-medium hover:text-cyan-300 transition-colors"
           >
             Try the demo dashboard
@@ -412,15 +412,15 @@ export default function ConventionPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
           </Link>
-          <p className="text-white/40 text-sm mt-2">Login: demo@poolapp.com / demo123</p>
+          <p className="text-white/40 text-sm mt-2">Login: demo@poolops.io / demo123</p>
         </div>
       </section>
 
       {/* Footer */}
       <footer className="px-4 py-8 border-t border-white/10">
         <div className="max-w-4xl mx-auto text-center text-white/40 text-sm">
-          <p>Questions? Find us at the show or email hello@poolapp.com</p>
-          <p className="mt-2">PoolApp 2026 - Pool service route optimization software.</p>
+          <p>Questions? Find us at the show or email hello@poolops.io</p>
+          <p className="mt-2">PoolOps 2026 - Pool service route optimization software.</p>
         </div>
       </footer>
     </div>

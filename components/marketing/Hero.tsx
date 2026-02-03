@@ -204,7 +204,7 @@ export default function Hero() {
               transition={{ delay: 0.3 }}
               className="text-lg sm:text-xl text-slate-600 mb-8 max-w-xl"
             >
-              Pool App optimizes your routes automatically, saving you $4,000+ per year in fuel
+              PoolOps optimizes your routes automatically, saving you $4,000+ per year in fuel
               and enabling 4-6 more service calls per technician per day.
             </motion.p>
 

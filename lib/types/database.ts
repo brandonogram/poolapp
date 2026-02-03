@@ -1,5 +1,5 @@
 /**
- * Pool App - Database Types
+ * PoolOps - Database Types
  * TypeScript interfaces matching the Supabase schema
  */
 

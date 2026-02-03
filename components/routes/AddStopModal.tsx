@@ -3,8 +3,8 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button, Badge } from '@/components/ui';
-import { customers } from '@/lib/mock-data';
 import { useRoutes, RouteStop } from '@/lib/routes-context';
+import { useCustomers } from '@/lib/customers-context';
 
 interface AddStopModalProps {
   isOpen: boolean;
@@ -16,9 +16,11 @@ interface AddStopModalProps {
 
 export function AddStopModal({ isOpen, onClose, technicianId, technicianName, existingStops }: AddStopModalProps) {
   const { addStop } = useRoutes();
+  const { customers } = useCustomers();
   const [selectedCustomer, setSelectedCustomer] = useState<string>('');
   const [timeWindow, setTimeWindow] = useState<'morning' | 'afternoon'>('morning');
   const [searchTerm, setSearchTerm] = useState('');
+  const [isPriority, setIsPriority] = useState(false);
 
   // Filter out customers already in this route
   const existingCustomerIds = existingStops.map(s => s.customerId);
@@ -30,10 +32,11 @@ export function AddStopModal({ isOpen, onClose, technicianId, technicianName, ex
 
   const handleSubmit = () => {
     if (selectedCustomer) {
-      addStop(technicianId, selectedCustomer, timeWindow);
+      addStop(technicianId, selectedCustomer, timeWindow, isPriority);
       setSelectedCustomer('');
       setTimeWindow('morning');
       setSearchTerm('');
+      setIsPriority(false);
       onClose();
     }
   };
@@ -42,6 +45,7 @@ export function AddStopModal({ isOpen, onClose, technicianId, technicianName, ex
     setSelectedCustomer('');
     setTimeWindow('morning');
     setSearchTerm('');
+    setIsPriority(false);
     onClose();
   };
 
@@ -113,8 +117,8 @@ export function AddStopModal({ isOpen, onClose, technicianId, technicianName, ex
                             <p className="font-medium text-slate-900">{customer.name}</p>
                             <p className="text-sm text-slate-500">{customer.address}</p>
                           </div>
-                          <Badge variant={customer.status === 'active' ? 'success' : customer.status === 'overdue' ? 'warning' : 'default'}>
-                            {customer.status}
+                          <Badge variant="success">
+                            active
                           </Badge>
                         </div>
                       </div>
@@ -160,6 +164,27 @@ export function AddStopModal({ isOpen, onClose, technicianId, technicianName, ex
                     <span className="block text-xs mt-1 opacity-70">12:00 PM - 5:00 PM</span>
                   </button>
                 </div>
+              </div>
+
+              {/* Priority */}
+              <div className="flex items-center justify-between p-3 rounded-lg border border-slate-200 bg-slate-50">
+                <div>
+                  <p className="text-sm font-medium text-slate-700">Priority Stop</p>
+                  <p className="text-xs text-slate-500">Schedule this stop first</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsPriority(!isPriority)}
+                  className={`relative w-12 h-6 rounded-full transition-colors ${
+                    isPriority ? 'bg-amber-500' : 'bg-slate-300'
+                  }`}
+                >
+                  <span
+                    className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-transform ${
+                      isPriority ? 'translate-x-6' : 'translate-x-1'
+                    }`}
+                  />
+                </button>
               </div>
 
               {/* Optimization Preview */}

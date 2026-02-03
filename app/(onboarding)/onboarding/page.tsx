@@ -33,7 +33,7 @@ export default function OnboardingWelcomePage() {
                 />
               </svg>
             </div>
-            <span className="text-xl font-bold text-slate-900">PoolApp</span>
+            <span className="text-xl font-bold text-slate-900">PoolOps</span>
           </div>
           <Link
             href="/login"
@@ -81,7 +81,7 @@ export default function OnboardingWelcomePage() {
               transition={{ delay: 0.2 }}
               className="text-4xl md:text-5xl font-bold text-slate-900 mb-4"
             >
-              Welcome to PoolApp!
+              Welcome to PoolOps!
             </motion.h1>
 
             {/* Subtitle */}
@@ -157,7 +157,7 @@ export default function OnboardingWelcomePage() {
       <footer className="border-t border-slate-100 bg-white/50">
         <div className="max-w-4xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between text-sm text-slate-500">
-            <span>PoolApp - Route optimization for pool pros</span>
+            <span>PoolOps - Route optimization for pool pros</span>
             <div className="flex items-center gap-4">
               <a href="#" className="hover:text-slate-700">Privacy</a>
               <a href="#" className="hover:text-slate-700">Terms</a>

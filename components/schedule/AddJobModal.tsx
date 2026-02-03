@@ -56,6 +56,9 @@ function formatTime(time: string): string {
 }
 
 export function AddJobModal({ trigger, onJobCreated }: AddJobModalProps) {
+  const supabaseClient = supabase as unknown as {
+    from: (table: string) => { insert: (values: Record<string, unknown>) => Promise<{ error: unknown }> };
+  };
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -189,9 +192,7 @@ export function AddJobModal({ trigger, onJobCreated }: AddJobModalProps) {
     setError(null);
 
     try {
-      // Using type assertion since Supabase types are not fully configured
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error: insertError } = await (supabase as any)
+      const { error: insertError } = await supabaseClient
         .from('service_jobs')
         .insert({
           company_id: DEMO_COMPANY_ID,

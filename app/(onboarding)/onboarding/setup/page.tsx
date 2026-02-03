@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
+import { getDemoStorage, setDemoMode } from '@/lib/demo-session';
 
 // Step indicator component
 function StepIndicator({ currentStep, totalSteps }: { currentStep: number; totalSteps: number }) {
@@ -67,7 +68,7 @@ function BusinessInfoStep({
     >
       <div>
         <h2 className="text-2xl font-bold text-slate-900 mb-2">Tell us about your business</h2>
-        <p className="text-slate-600">This helps us customize PoolApp for your needs.</p>
+        <p className="text-slate-600">This helps us customize PoolOps for your needs.</p>
       </div>
 
       <div className="space-y-4">
@@ -474,7 +475,7 @@ function CompleteStep({
       >
         <h2 className="text-3xl font-bold text-slate-900 mb-2">You&apos;re all set!</h2>
         <p className="text-lg text-slate-600">
-          Welcome to PoolApp, <span className="font-semibold">{businessName || 'there'}</span>!
+          Welcome to PoolOps, <span className="font-semibold">{businessName || 'there'}</span>!
         </p>
       </motion.div>
 
@@ -566,9 +567,10 @@ export default function SetupWizardPage() {
 
   const handleUseDemoData = () => {
     setUseDemoData(true);
-    localStorage.setItem('poolapp-demo-mode', 'true');
-    localStorage.setItem('poolapp-onboarding-complete', 'true');
-    localStorage.setItem('poolapp-business-info', JSON.stringify({
+    setDemoMode(true);
+    const storage = getDemoStorage();
+    storage?.setItem('poolapp-onboarding-complete', 'true');
+    storage?.setItem('poolapp-business-info', JSON.stringify({
       companyName: 'Blue Wave Pool Services',
       numTechnicians: 4,
       numPools: 125,
@@ -582,14 +584,19 @@ export default function SetupWizardPage() {
   };
 
   const handleComplete = () => {
-    localStorage.setItem('poolapp-onboarding-complete', 'true');
-    localStorage.setItem('poolapp-demo-mode', useDemoData ? 'true' : 'false');
-    localStorage.setItem('poolapp-business-info', JSON.stringify(businessInfo));
+    if (useDemoData) {
+      setDemoMode(true);
+    } else {
+      setDemoMode(false);
+    }
+    const storage = getDemoStorage();
+    storage?.setItem('poolapp-onboarding-complete', 'true');
+    storage?.setItem('poolapp-business-info', JSON.stringify(businessInfo));
     if (technician.name) {
-      localStorage.setItem('poolapp-first-technician', JSON.stringify(technician));
+      storage?.setItem('poolapp-first-technician', JSON.stringify(technician));
     }
     if (customer.name) {
-      localStorage.setItem('poolapp-first-customer', JSON.stringify(customer));
+      storage?.setItem('poolapp-first-customer', JSON.stringify(customer));
     }
   };
 
@@ -619,7 +626,7 @@ export default function SetupWizardPage() {
                 />
               </svg>
             </div>
-            <span className="text-xl font-bold text-slate-900">PoolApp</span>
+            <span className="text-xl font-bold text-slate-900">PoolOps</span>
           </div>
           {currentStep < 4 && (
             <button
@@ -687,7 +694,7 @@ export default function SetupWizardPage() {
         <div className="max-w-2xl mx-auto px-6 py-4 text-center">
           <p className="text-sm text-slate-500">
             Need help?{' '}
-            <a href="mailto:support@poolapp.com" className="text-blue-600 hover:underline">
+            <a href="mailto:support@poolops.io" className="text-blue-600 hover:underline">
               Contact support
             </a>
           </p>

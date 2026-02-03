@@ -57,8 +57,8 @@ export async function POST(request: NextRequest) {
         plan: plan || 'convention-special',
         source: 'pool-spa-show-2026',
       },
-      success_url: `${process.env.NEXT_PUBLIC_BASE_URL || 'https://poolapp.vercel.app'}/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL || 'https://poolapp.vercel.app'}/convention`,
+      success_url: `${process.env.NEXT_PUBLIC_BASE_URL || 'https://poolops.io'}/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL || 'https://poolops.io'}/convention`,
       subscription_data: {
         trial_period_days: 14,
         metadata: {

@@ -18,6 +18,7 @@ import {
 } from '@/lib/analytics/improvement-loop';
 import { getABTestingEngine } from '@/lib/analytics/ab-testing';
 import { getAnalyticsReporter } from '@/lib/analytics/reporter';
+import type { WeeklyReport } from '@/lib/analytics/reporter';
 
 // ============================================================================
 // Types
@@ -64,7 +65,7 @@ async function runDailyAnalysis(): Promise<AnalysisResult> {
   const now = new Date();
   const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
-  const projectId = process.env.VERCEL_PROJECT_ID || 'poolapp';
+  const projectId = process.env.VERCEL_PROJECT_ID || 'poolops';
 
   const metrics = await aggregateMetrics([
     () => fetchVercelAnalytics(projectId, weekAgo, now),
@@ -104,8 +105,7 @@ async function runDailyAnalysis(): Promise<AnalysisResult> {
 // Notification Functions
 // ============================================================================
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function sendNotifications(report: any) {
+async function sendNotifications(report: WeeklyReport) {
   const reporter = getAnalyticsReporter();
 
   // Send email if configured

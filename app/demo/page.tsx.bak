@@ -1,0 +1,22 @@
+'use client';
+
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { getDemoStorage, setDemoMode } from '@/lib/demo-session';
+
+export default function DemoRedirectPage() {
+  const router = useRouter();
+
+  useEffect(() => {
+    setDemoMode(true);
+    const storage = getDemoStorage();
+    storage?.setItem('poolapp_demo_session', JSON.stringify({
+      user: { email: 'demo@poolops.io', name: 'Demo Owner', role: 'Owner' },
+      company: 'Blue Wave Pool Services',
+      loggedIn: true,
+    }));
+    router.replace('/dashboard');
+  }, [router]);
+
+  return null;
+}

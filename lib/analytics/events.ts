@@ -1,7 +1,7 @@
 import { track } from '@vercel/analytics'
 
 /**
- * Vercel Analytics Event Tracking for PoolApp
+ * Vercel Analytics Event Tracking for PoolOps
  *
  * These functions use Vercel Analytics for custom event tracking.
  * Page views are tracked automatically by Vercel Analytics.

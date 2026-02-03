@@ -246,7 +246,7 @@ export default function AccountPage() {
 
       {/* App Version */}
       <p className="text-center text-sm text-slate-400 dark:text-slate-500 mt-6">
-        PoolApp Tech v1.0.0
+        PoolOps Tech v1.0.0
       </p>
     </div>
   );

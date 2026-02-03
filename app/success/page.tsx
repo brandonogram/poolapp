@@ -45,7 +45,7 @@ function SuccessContent() {
           transition={{ delay: 0.3 }}
           className="text-3xl font-bold text-slate-900 mb-4"
         >
-          Welcome to Pool App!
+          Welcome to PoolOps!
         </motion.h1>
 
         <motion.p
@@ -103,8 +103,8 @@ function SuccessContent() {
 
           <p className="text-slate-500 text-sm">
             Need help? Email us at{' '}
-            <a href="mailto:hello@poolapp.com" className="text-blue-600 hover:underline">
-              hello@poolapp.com
+            <a href="mailto:hello@poolops.io" className="text-blue-600 hover:underline">
+              hello@poolops.io
             </a>
           </p>
         </motion.div>

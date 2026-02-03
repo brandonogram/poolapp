@@ -1,5 +1,5 @@
 /**
- * Pool App - Data Hooks
+ * PoolOps - Data Hooks
  * React hooks for fetching and managing data
  * Currently returns mock data, structured for easy migration to Supabase
  */

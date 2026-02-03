@@ -79,7 +79,7 @@ export default function Features() {
             </span>
           </h2>
           <p className="text-lg text-slate-600 max-w-2xl mx-auto">
-            Pool App combines route optimization, invoicing, and chemistry tracking in one simple platform built specifically for pool professionals.
+            PoolOps combines route optimization, invoicing, and chemistry tracking in one simple platform built specifically for pool professionals.
           </p>
         </motion.div>
 

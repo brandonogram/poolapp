@@ -4,9 +4,10 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
+import { getDemoStorage, setDemoMode } from '@/lib/demo-session';
 
 // Demo credentials
-const DEMO_EMAIL = 'demo@poolapp.com';
+const DEMO_EMAIL = 'demo@poolops.io';
 const DEMO_PASSWORD = 'demo123';
 
 export default function LoginPage() {
@@ -27,7 +28,9 @@ export default function LoginPage() {
     // Check demo credentials
     if (email === DEMO_EMAIL && password === DEMO_PASSWORD) {
       // Store demo session
-      localStorage.setItem('poolapp_demo_session', JSON.stringify({
+      setDemoMode(true);
+      const storage = getDemoStorage();
+      storage?.setItem('poolapp_demo_session', JSON.stringify({
         user: { email: DEMO_EMAIL, name: 'John Smith', role: 'Owner' },
         company: 'Aqua Pro Pool Services',
         loggedIn: true,
@@ -69,7 +72,7 @@ export default function LoginPage() {
               />
             </svg>
           </div>
-          <span className="text-2xl font-bold text-slate-900">Pool App</span>
+          <span className="text-2xl font-bold text-slate-900">PoolOps</span>
         </Link>
 
         {/* Login Card */}
@@ -211,7 +214,7 @@ export default function LoginPage() {
             <div className="flex-1">
               <h3 className="font-semibold text-blue-900 mb-1">Demo Account</h3>
               <p className="text-sm text-blue-700 mb-3">
-                Try Pool App with our demo account:
+                Try PoolOps with our demo account:
               </p>
               <div className="bg-white rounded-lg p-3 space-y-1 font-mono text-sm border border-blue-200">
                 <div className="flex justify-between">

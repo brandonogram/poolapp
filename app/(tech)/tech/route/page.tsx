@@ -1,6 +1,7 @@
 'use client';
 
 import { useTech } from '@/lib/tech-context';
+import { getDemoMode } from '@/lib/demo-session';
 import { StopCard } from '@/components/tech/StopCard';
 
 const CheckIcon = ({ className }: { className?: string }) => (
@@ -22,7 +23,8 @@ const TruckIcon = ({ className }: { className?: string }) => (
 );
 
 export default function TechRoutePage() {
-  const { route, getCurrentStop, getUpcomingStops, getCompletedStops } = useTech();
+  const { route, getCurrentStop, getUpcomingStops, getCompletedStops, isOnline, pendingSync } = useTech();
+  const isDemoMode = getDemoMode();
 
   const currentStop = getCurrentStop();
   const upcomingStops = getUpcomingStops();
@@ -45,6 +47,21 @@ export default function TechRoutePage() {
         <p className="text-sm text-slate-500 dark:text-slate-400">
           {route.totalStops} stops | ~{route.estimatedHours} hrs | {route.totalMiles} mi
         </p>
+        {isDemoMode && (
+          <div className="mt-2 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700 text-xs font-semibold text-amber-800 dark:text-amber-200">
+            Demo session resets on tab close
+          </div>
+        )}
+        {!isOnline && (
+          <div className="mt-2 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700 text-xs font-semibold text-amber-800 dark:text-amber-200">
+            Offline mode
+          </div>
+        )}
+        {isOnline && pendingSync > 0 && (
+          <div className="mt-2 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 text-xs font-semibold text-blue-800 dark:text-blue-200">
+            Syncing {pendingSync} {pendingSync === 1 ? 'entry' : 'entries'}
+          </div>
+        )}
       </div>
 
       {/* Progress Card */}

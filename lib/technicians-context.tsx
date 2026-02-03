@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
+import { getDemoStorage } from './demo-session';
 
 export interface Technician {
   id: string;
@@ -34,7 +35,7 @@ const initialTechnicians: Technician[] = [
     id: 'tech-1',
     name: 'Mike Rodriguez',
     phone: '(555) 123-4567',
-    email: 'mike.rodriguez@poolapp.com',
+    email: 'mike.rodriguez@poolops.io',
     color: '#3B82F6', // blue
     status: 'active',
     startDate: '2024-03-15',
@@ -48,7 +49,7 @@ const initialTechnicians: Technician[] = [
     id: 'tech-2',
     name: 'Sarah Chen',
     phone: '(555) 234-5678',
-    email: 'sarah.chen@poolapp.com',
+    email: 'sarah.chen@poolops.io',
     color: '#10B981', // green
     status: 'active',
     startDate: '2024-05-20',
@@ -62,7 +63,7 @@ const initialTechnicians: Technician[] = [
     id: 'tech-3',
     name: 'Jake Thompson',
     phone: '(555) 345-6789',
-    email: 'jake.thompson@poolapp.com',
+    email: 'jake.thompson@poolops.io',
     color: '#F59E0B', // amber
     status: 'active',
     startDate: '2024-08-01',
@@ -82,9 +83,10 @@ export function TechniciansProvider({ children }: { children: ReactNode }) {
   const [technicians, setTechnicians] = useState<Technician[]>(initialTechnicians);
   const [isHydrated, setIsHydrated] = useState(false);
 
-  // Load from localStorage on mount
+  // Load from storage on mount
   useEffect(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
+    const storage = getDemoStorage();
+    const saved = storage?.getItem(STORAGE_KEY);
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
@@ -98,10 +100,11 @@ export function TechniciansProvider({ children }: { children: ReactNode }) {
     setIsHydrated(true);
   }, []);
 
-  // Save to localStorage on change (after hydration)
+  // Save to storage on change (after hydration)
   useEffect(() => {
     if (isHydrated) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(technicians));
+      const storage = getDemoStorage();
+      storage?.setItem(STORAGE_KEY, JSON.stringify(technicians));
     }
   }, [technicians, isHydrated]);
 

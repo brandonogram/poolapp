@@ -1,6 +1,8 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import { getDemoStorage } from './demo-session';
+import { deriveLatLng } from './geo';
 
 // Types
 export type CustomerType = 'residential' | 'commercial';
@@ -31,6 +33,8 @@ export interface Customer {
   monthlyRate: number;
   assignedTech: string;
   notes?: string;
+  lat?: number;
+  lng?: number;
 }
 
 export interface CustomerFormData {
@@ -397,6 +401,18 @@ function getDefaultChemistry(): ChemistryReading {
   };
 }
 
+function ensureCustomerGeo(customer: Customer): Customer {
+  if (typeof customer.lat === 'number' && typeof customer.lng === 'number') {
+    return customer;
+  }
+  const { lat, lng } = deriveLatLng(customer.address, customer.city);
+  return { ...customer, lat, lng };
+}
+
+function ensureCustomersGeo(customers: Customer[]): Customer[] {
+  return customers.map(ensureCustomerGeo);
+}
+
 // Technicians for assignment
 const technicians = ['Mike Rodriguez', 'Sarah Chen', 'Jake Thompson'];
 
@@ -404,17 +420,21 @@ export function CustomersProvider({ children }: { children: ReactNode }) {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Load customers from localStorage on mount
+  // Load customers from storage on mount
   useEffect(() => {
     try {
-      const stored = localStorage.getItem(STORAGE_KEY);
+      const storage = getDemoStorage();
+      const stored = storage?.getItem(STORAGE_KEY);
       if (stored) {
         const parsed = JSON.parse(stored);
-        setCustomers(parsed);
+        const hydrated = ensureCustomersGeo(parsed);
+        setCustomers(hydrated);
+        storage?.setItem(STORAGE_KEY, JSON.stringify(hydrated));
       } else {
         // Initialize with mock data if no stored data
-        setCustomers(initialCustomers);
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(initialCustomers));
+        const hydrated = ensureCustomersGeo(initialCustomers);
+        setCustomers(hydrated);
+        storage?.setItem(STORAGE_KEY, JSON.stringify(hydrated));
       }
     } catch (error) {
       console.error('Error loading customers from localStorage:', error);
@@ -423,11 +443,12 @@ export function CustomersProvider({ children }: { children: ReactNode }) {
     setLoading(false);
   }, []);
 
-  // Save to localStorage whenever customers change
+  // Save to storage whenever customers change
   useEffect(() => {
     if (!loading && customers.length > 0) {
       try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(customers));
+        const storage = getDemoStorage();
+        storage?.setItem(STORAGE_KEY, JSON.stringify(customers));
       } catch (error) {
         console.error('Error saving customers to localStorage:', error);
       }
@@ -454,8 +475,9 @@ export function CustomersProvider({ children }: { children: ReactNode }) {
       notes: data.notes,
     };
 
-    setCustomers((prev) => [newCustomer, ...prev]);
-    return newCustomer;
+    const withGeo = ensureCustomerGeo(newCustomer);
+    setCustomers((prev) => [withGeo, ...prev]);
+    return withGeo;
   }, []);
 
   const updateCustomer = useCallback((id: string, data: Partial<CustomerFormData>): Customer | null => {

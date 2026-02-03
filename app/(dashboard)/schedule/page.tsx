@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button, Badge, Card, Toast, useToast } from '@/components/ui';
 import { useSchedule, Job, formatTime, formatDate } from '@/lib/schedule-context';
@@ -85,18 +85,18 @@ export default function SchedulePage() {
   const [createForTech, setCreateForTech] = useState<string | undefined>();
 
   // Calculate capacity for a day
-  const getCapacity = (dayIndex: number) => {
+  const getCapacity = useCallback((dayIndex: number) => {
     const maxJobsPerTech = 10;
     const maxCapacity = technicians.length * maxJobsPerTech;
     const dateStr = weekDates[dayIndex].isoDate;
     const dayJobs = getJobsForDate(dateStr);
     return Math.round((dayJobs.length / maxCapacity) * 100);
-  };
+  }, [technicians.length, weekDates, getJobsForDate]);
 
   // Calculate daily capacities
   const capacities = useMemo(() =>
     weekDates.map((_, i) => getCapacity(i)),
-    [weekDates, jobs]
+    [weekDates, getCapacity]
   );
 
   // Get jobs at risk due to weather
@@ -106,7 +106,7 @@ export default function SchedulePage() {
     const dateStr = weekDates[rainDay.day]?.isoDate;
     if (!dateStr) return 0;
     return getJobsForDate(dateStr).length;
-  }, [weekDates, jobs]);
+  }, [weekDates, getJobsForDate]);
 
   // Get jobs for a specific tech and day
   const getJobsForCell = (techId: string, dateStr: string) => {

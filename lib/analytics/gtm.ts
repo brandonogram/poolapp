@@ -1,5 +1,5 @@
 /**
- * Google Tag Manager Integration for PoolApp
+ * Google Tag Manager Integration for PoolOps
  *
  * Alternative to direct GA4 implementation
  * GTM provides more flexibility for marketing teams to manage tags
@@ -160,7 +160,7 @@ export const gtmPurchase = (
 
 // ============================================
 // GTM CONVERSION EVENTS
-// Custom events for PoolApp conversions
+// Custom events for PoolOps conversions
 // ============================================
 
 /**

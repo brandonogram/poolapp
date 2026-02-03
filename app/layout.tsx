@@ -9,10 +9,10 @@ import ScrollDepthTracker from '@/components/analytics/ScrollDepthTracker'
 import './globals.css'
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://poolapp-tau.vercel.app'),
+  metadataBase: new URL('https://poolops.io'),
   title: {
-    default: 'PoolApp - Pool Service Route Optimization Software | Save $4,000+/Year',
-    template: '%s | PoolApp',
+    default: 'PoolOps - Pool Service Route Optimization Software | Save $4,000+/Year',
+    template: '%s | PoolOps',
   },
   description: 'Pool service software with AI-powered route optimization. Save 2 hours daily, reduce callbacks 70%, and get paid faster. Trusted by 500+ pool pros. Start free trial.',
   keywords: [
@@ -24,27 +24,27 @@ export const metadata: Metadata = {
     'pool cleaning business software',
     'pool service company software',
   ],
-  authors: [{ name: 'PoolApp' }],
-  creator: 'PoolApp',
+  authors: [{ name: 'PoolOps' }],
+  creator: 'PoolOps',
   openGraph: {
     type: 'website',
     locale: 'en_US',
-    url: 'https://poolapp-tau.vercel.app',
-    siteName: 'PoolApp',
-    title: 'PoolApp - Pool Service Route Optimization Software',
+    url: 'https://poolops.io',
+    siteName: 'PoolOps',
+    title: 'PoolOps - Pool Service Route Optimization Software',
     description: 'Save $4,000+/year with AI-powered route optimization. Pool service software built for pool pros.',
     images: [
       {
         url: '/og-image.png',
         width: 1200,
         height: 630,
-        alt: 'PoolApp - Pool Service Route Optimization Software',
+        alt: 'PoolOps - Pool Service Route Optimization Software',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'PoolApp - Pool Service Route Optimization Software',
+    title: 'PoolOps - Pool Service Route Optimization Software',
     description: 'Save $4,000+/year with AI-powered route optimization for pool service businesses.',
     images: ['/og-image.png'],
   },
@@ -69,7 +69,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <link rel="canonical" href="https://poolapp-tau.vercel.app" />
+        <link rel="canonical" href="https://poolops.io" />
         {/* Structured Data - Organization & Software Application */}
         <script
           type="application/ld+json"
@@ -77,7 +77,7 @@ export default function RootLayout({
             __html: JSON.stringify({
               "@context": "https://schema.org",
               "@type": "SoftwareApplication",
-              "name": "PoolApp",
+              "name": "PoolOps",
               "applicationCategory": "BusinessApplication",
               "operatingSystem": "iOS, Android, Web",
               "description": "Pool service software with AI-powered route optimization. Save 2 hours daily and $4,000+ per year.",

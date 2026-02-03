@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { getDemoStorage } from './demo-session';
 
 export interface Customer {
   id: string;
@@ -129,9 +130,10 @@ function calculateRouteDistance(customers: Customer[], optimized: boolean): numb
 export function OnboardingProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<OnboardingState>(defaultState);
 
-  // Load from localStorage on mount
+  // Load from storage on mount
   useEffect(() => {
-    const saved = localStorage.getItem('poolapp-onboarding');
+    const storage = getDemoStorage();
+    const saved = storage?.getItem('poolapp-onboarding');
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
@@ -142,9 +144,10 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  // Save to localStorage on change
+  // Save to storage on change
   useEffect(() => {
-    localStorage.setItem('poolapp-onboarding', JSON.stringify(state));
+    const storage = getDemoStorage();
+    storage?.setItem('poolapp-onboarding', JSON.stringify(state));
   }, [state]);
 
   const setZipCode = (zip: string) => {
@@ -229,7 +232,8 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
   };
 
   const resetOnboarding = () => {
-    localStorage.removeItem('poolapp-onboarding');
+    const storage = getDemoStorage();
+    storage?.removeItem('poolapp-onboarding');
     setState(defaultState);
   };
 

@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
+import { useTech } from '@/lib/tech-context';
 
 const CheckIcon = ({ className }: { className?: string }) => (
   <svg className={className} fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" aria-hidden="true">
@@ -14,8 +15,25 @@ const CalendarIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
+interface HistoryStop {
+  id: string;
+  customer: string;
+  time: string;
+  chemistry: { pH: number; chlorine: number };
+  status: 'completed' | 'skipped';
+  reason?: string;
+  tasksSummary?: string;
+  photosCount?: number;
+  notes?: string;
+}
+
+interface HistoryDay {
+  date: string;
+  stops: HistoryStop[];
+}
+
 // Mock history data
-const historyData = [
+const mockHistoryData: HistoryDay[] = [
   {
     date: 'Today - Jan 26',
     stops: [
@@ -49,6 +67,34 @@ const historyData = [
 
 export default function HistoryPage() {
   const [expandedStop, setExpandedStop] = useState<string | null>(null);
+  const { serviceHistory } = useTech();
+
+  const historyData = useMemo(() => {
+    if (!serviceHistory || serviceHistory.length === 0) {
+      return mockHistoryData;
+    }
+
+    const grouped = serviceHistory.reduce<Record<string, typeof serviceHistory>>((acc, item) => {
+      acc[item.date] = acc[item.date] || [];
+      acc[item.date].push(item);
+      return acc;
+    }, {});
+
+    return Object.entries(grouped).map(([date, stops]) => ({
+      date,
+      stops: stops.map((stop) => ({
+        id: stop.id,
+        customer: stop.customer,
+        time: stop.time,
+        chemistry: { pH: stop.chemistry.pH, chlorine: stop.chemistry.chlorine },
+        status: stop.status,
+        reason: stop.reason,
+        tasksSummary: stop.tasksSummary,
+        photosCount: stop.photosCount,
+        notes: stop.notes,
+      })),
+    }));
+  }, [serviceHistory]);
 
   // Calculate weekly stats
   const totalStops = historyData.reduce((acc, day) => acc + day.stops.length, 0);
@@ -160,15 +206,23 @@ export default function HistoryPage() {
                         <div>
                           <p className="text-slate-500 dark:text-slate-400">Tasks Completed</p>
                           <p className="font-semibold text-slate-900 dark:text-slate-100">
-                            {stop.status === 'completed' ? 'Skim, Brush, Baskets' : '-'}
+                            {stop.tasksSummary || (stop.status === 'completed' ? 'Skim, Brush, Baskets' : '-')}
                           </p>
                         </div>
                         <div>
                           <p className="text-slate-500 dark:text-slate-400">Photos</p>
                           <p className="font-semibold text-slate-900 dark:text-slate-100">
-                            {stop.status === 'completed' ? '2 photos' : '0 photos'}
+                            {stop.photosCount !== undefined
+                              ? `${stop.photosCount} ${stop.photosCount === 1 ? 'photo' : 'photos'}`
+                              : (stop.status === 'completed' ? '2 photos' : '0 photos')}
                           </p>
                         </div>
+                        {stop.notes && (
+                          <div className="col-span-2">
+                            <p className="text-slate-500 dark:text-slate-400">Notes</p>
+                            <p className="font-semibold text-slate-900 dark:text-slate-100">{stop.notes}</p>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>

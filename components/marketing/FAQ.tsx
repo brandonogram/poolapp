@@ -19,7 +19,7 @@ const faqs = [
   },
   {
     question: 'Do my technicians need smartphones?',
-    answer: 'Yes, Pool App works best with smartphones (iOS or Android). Technicians use the mobile app to view routes, log services, and capture photos. The app works offline too, syncing when connection is restored.',
+    answer: 'Yes, PoolOps works best with smartphones (iOS or Android). Technicians use the mobile app to view routes, log services, and capture photos. The app works offline too, syncing when connection is restored.',
   },
   {
     question: 'Can I import my existing customer data?',
@@ -136,14 +136,14 @@ export default function FAQ() {
           <p className="text-slate-600 mb-4">Still have questions?</p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <a
-              href="mailto:support@poolapp.com"
+              href="mailto:support@poolops.io"
               className="inline-flex items-center gap-2 text-primary-500 font-medium hover:text-primary-600 transition-colors"
             >
               <svg className="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
                 <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
                 <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
               </svg>
-              support@poolapp.com
+              support@poolops.io
             </a>
             <span className="text-slate-300 hidden sm:inline">|</span>
             <a

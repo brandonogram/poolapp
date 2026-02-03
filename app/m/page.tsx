@@ -18,7 +18,7 @@ export default function MobileLandingPage() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
             </svg>
           </div>
-          <span className="text-xl font-bold text-white">Pool App</span>
+          <span className="text-xl font-bold text-white">PoolOps</span>
         </div>
 
         {/* Hero */}
@@ -133,18 +133,18 @@ export default function MobileLandingPage() {
           className="text-center"
         >
           <Link
-            href="/login"
+            href="/demo"
             className="text-cyan-400 text-sm font-medium"
           >
             See demo dashboard →
           </Link>
-          <p className="text-white/40 text-xs mt-1">demo@poolapp.com / demo123</p>
+          <p className="text-white/40 text-xs mt-1">demo@poolops.io / demo123</p>
         </motion.div>
 
         {/* Footer */}
         <div className="mt-12 pt-6 border-t border-white/10 text-center">
           <p className="text-white/40 text-xs">Pool & Spa Show 2026 - Atlantic City</p>
-          <p className="text-white/30 text-xs mt-1">hello@poolapp.com</p>
+          <p className="text-white/30 text-xs mt-1">hello@poolops.io</p>
         </div>
       </div>
     </div>
