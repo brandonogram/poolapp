@@ -1,8 +1,11 @@
 'use client';
 
+import { useEffect, useMemo, useState } from 'react';
 import { useTech } from '@/lib/tech-context';
 import { getDemoMode } from '@/lib/demo-session';
 import { StopCard } from '@/components/tech/StopCard';
+import { calculateDistance } from '@/lib/realtime/technician-locations';
+import { upsertDemoTracking } from '@/lib/realtime/demo-tracking';
 
 const CheckIcon = ({ className }: { className?: string }) => (
   <svg className={className} fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
@@ -22,9 +25,25 @@ const TruckIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
+const BASE_LAT = 33.4484;
+const BASE_LNG = -112.074;
+
 export default function TechRoutePage() {
   const { route, getCurrentStop, getUpcomingStops, getCompletedStops, isOnline, pendingSync } = useTech();
   const isDemoMode = getDemoMode();
+  const [showTrackerShare, setShowTrackerShare] = useState(false);
+  const [shareLink, setShareLink] = useState('');
+  const [shareCopied, setShareCopied] = useState(false);
+  const [trackingSession, setTrackingSession] = useState<{
+    trackerId: string;
+    targetLat: number;
+    targetLng: number;
+    currentLat: number;
+    currentLng: number;
+    etaMinutes: number;
+    distanceMiles: number;
+    arrivalTime: string;
+  } | null>(null);
 
   const currentStop = getCurrentStop();
   const upcomingStops = getUpcomingStops();
@@ -38,6 +57,145 @@ export default function TechRoutePage() {
   const finishTime = new Date();
   finishTime.setMinutes(finishTime.getMinutes() + estimatedMinutesRemaining);
   const formattedFinishTime = finishTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+
+  const destination = useMemo(() => {
+    if (!currentStop) return null;
+    const latOffset = (currentStop.order % 6) * 0.012 + 0.01;
+    const lngOffset = (currentStop.order % 5) * 0.015 + 0.01;
+    return {
+      lat: BASE_LAT + latOffset,
+      lng: BASE_LNG + lngOffset,
+    };
+  }, [currentStop]);
+
+  const handleSendOnTheWay = () => {
+    if (!currentStop) return;
+    const trackerId = `demo-${currentStop.id}-${Date.now()}`;
+    const startLat = BASE_LAT + 0.002;
+    const startLng = BASE_LNG - 0.002;
+    const targetLat = destination?.lat ?? BASE_LAT + 0.02;
+    const targetLng = destination?.lng ?? BASE_LNG + 0.02;
+    const initialDistance = calculateDistance(startLat, startLng, targetLat, targetLng);
+    const etaMinutes = Math.max(4, Math.ceil(initialDistance / 0.35));
+    const distanceMiles = Number(initialDistance.toFixed(1));
+    const arrivalTime = new Date(Date.now() + etaMinutes * 60000).toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+    });
+    const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
+    const params = new URLSearchParams({
+      tracker: trackerId,
+    });
+    const url = `${baseUrl}/track/${currentStop.id}?${params.toString()}`;
+    setShareLink(url);
+    setShareCopied(false);
+    setShowTrackerShare(true);
+    setTrackingSession({
+      trackerId,
+      targetLat,
+      targetLng,
+      currentLat: startLat,
+      currentLng: startLng,
+      etaMinutes,
+      distanceMiles,
+      arrivalTime,
+    });
+  };
+
+  const handleCopyShare = async () => {
+    if (!shareLink) return;
+    try {
+      await navigator.clipboard.writeText(shareLink);
+      setShareCopied(true);
+      setTimeout(() => setShareCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy share link', err);
+    }
+  };
+
+  useEffect(() => {
+    if (!trackingSession || !currentStop) return;
+
+    let intervalId: ReturnType<typeof setInterval> | null = null;
+    let active = true;
+
+    const pushUpdate = async (nextLat: number, nextLng: number, nextDistance: number, nextEta: number) => {
+      try {
+        await upsertDemoTracking({
+          tracker_id: trackingSession.trackerId,
+          tech_name: route.techName,
+          customer_name: currentStop.customerName,
+          address: currentStop.address,
+          latitude: nextLat,
+          longitude: nextLng,
+          eta_minutes: nextEta,
+          distance_miles: Number(nextDistance.toFixed(1)),
+          arrival_time: trackingSession.arrivalTime,
+        });
+      } catch (err) {
+        console.error('Demo tracking update failed', err);
+      }
+    };
+
+    const startFallbackLoop = () => {
+      intervalId = setInterval(() => {
+        if (!active) return;
+        setTrackingSession(prev => {
+          if (!prev) return prev;
+          const step = 0.18;
+          const nextLat = prev.currentLat + (prev.targetLat - prev.currentLat) * step;
+          const nextLng = prev.currentLng + (prev.targetLng - prev.currentLng) * step;
+          const distance = calculateDistance(nextLat, nextLng, prev.targetLat, prev.targetLng);
+          const eta = Math.max(1, Math.ceil(distance / 0.35));
+          void pushUpdate(nextLat, nextLng, distance, eta);
+          return {
+            ...prev,
+            currentLat: nextLat,
+            currentLng: nextLng,
+            distanceMiles: distance,
+            etaMinutes: eta,
+          };
+        });
+      }, 8000);
+    };
+
+    if (navigator.geolocation) {
+      const watchId = navigator.geolocation.watchPosition(
+        (pos) => {
+          if (!active) return;
+          const nextLat = pos.coords.latitude;
+          const nextLng = pos.coords.longitude;
+          const distance = calculateDistance(nextLat, nextLng, trackingSession.targetLat, trackingSession.targetLng);
+          const eta = Math.max(1, Math.ceil(distance / 0.35));
+          setTrackingSession(prev => prev ? ({
+            ...prev,
+            currentLat: nextLat,
+            currentLng: nextLng,
+            distanceMiles: distance,
+            etaMinutes: eta,
+          }) : prev);
+          void pushUpdate(nextLat, nextLng, distance, eta);
+        },
+        () => {
+          startFallbackLoop();
+        },
+        { enableHighAccuracy: false, maximumAge: 10000, timeout: 8000 }
+      );
+
+      return () => {
+        active = false;
+        navigator.geolocation.clearWatch(watchId);
+        if (intervalId) clearInterval(intervalId);
+      };
+    }
+
+    startFallbackLoop();
+
+    return () => {
+      active = false;
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, [trackingSession, currentStop, route.techName]);
 
   return (
     <div className="p-4 pb-8">
@@ -100,6 +258,18 @@ export default function TechRoutePage() {
       {/* Current/Next Stop - Prominent */}
       {currentStop ? (
         <div className="mb-5">
+          <div className="flex items-center justify-between mb-2">
+            <div>
+              <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Current stop</p>
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">{currentStop.customerName}</h2>
+            </div>
+            <button
+              onClick={handleSendOnTheWay}
+              className="px-3 py-2 rounded-lg bg-blue-600 text-white text-xs font-semibold shadow-sm hover:bg-blue-500 transition-colors"
+            >
+              Send On The Way
+            </button>
+          </div>
           <StopCard stop={currentStop} isNext={true} />
         </div>
       ) : (
@@ -165,6 +335,48 @@ export default function TechRoutePage() {
             <path strokeLinecap="round" strokeLinejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 0 1 0 1.972l-11.54 6.347a1.125 1.125 0 0 1-1.667-.986V5.653Z" />
           </svg>
         </a>
+      )}
+
+      {showTrackerShare && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4">
+          <div className="w-full max-w-md rounded-2xl bg-white dark:bg-surface-800 p-5 shadow-xl">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-xs uppercase tracking-wide text-blue-600 dark:text-blue-300 font-semibold">On the way</p>
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Share live tracking</h3>
+                <p className="text-sm text-slate-600 dark:text-slate-300 mt-1">
+                  Send this link to the customer so they can see how far away the tech is.
+                </p>
+              </div>
+              <button
+                onClick={() => setShowTrackerShare(false)}
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                aria-label="Close share modal"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="mt-4 rounded-xl border border-slate-200 dark:border-surface-700 bg-slate-50 dark:bg-surface-900 px-3 py-2 text-xs text-slate-700 dark:text-slate-300 break-all">
+              {shareLink}
+            </div>
+            <div className="mt-4 flex flex-wrap gap-3">
+              <button
+                onClick={handleCopyShare}
+                className="flex-1 rounded-xl bg-slate-900 text-white py-2 text-sm font-semibold hover:bg-slate-800 transition-colors"
+              >
+                {shareCopied ? 'Copied' : 'Copy link'}
+              </button>
+              <a
+                href={shareLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1 rounded-xl border border-slate-200 dark:border-surface-700 text-center py-2 text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-surface-700 transition-colors"
+              >
+                Open tracker
+              </a>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

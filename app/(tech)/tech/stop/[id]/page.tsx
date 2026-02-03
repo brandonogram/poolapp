@@ -92,9 +92,6 @@ export default function ServiceEntryPage() {
   const [photos, setPhotos] = useState<string[]>([]);
   const [notes, setNotes] = useState('');
   const [showPhotoCapture, setShowPhotoCapture] = useState(false);
-  const [showTrackerShare, setShowTrackerShare] = useState(false);
-  const [shareLink, setShareLink] = useState('');
-  const [shareCopied, setShareCopied] = useState(false);
 
   // Redirect if stop not found
   useEffect(() => {
@@ -165,40 +162,6 @@ export default function ServiceEntryPage() {
     setShowPhotoCapture(false);
   };
 
-  const handleSendOnTheWay = () => {
-    const etaMinutes = Math.max(6, 18 - (stop.order % 5) * 2);
-    const distanceMiles = Math.max(0.8, Number((etaMinutes * 0.35).toFixed(1)));
-    const arrivalTime = new Date(Date.now() + etaMinutes * 60000).toLocaleTimeString('en-US', {
-      hour: 'numeric',
-      minute: '2-digit',
-    });
-    const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
-    const params = new URLSearchParams({
-      customer: stop.customerName,
-      address: stop.address,
-      tech: route.techName,
-      eta: String(etaMinutes),
-      distance: String(distanceMiles),
-      arrival: arrivalTime,
-      updated: String(Date.now()),
-    });
-    const url = `${baseUrl}/track/${stop.id}?${params.toString()}`;
-    setShareLink(url);
-    setShareCopied(false);
-    setShowTrackerShare(true);
-  };
-
-  const handleCopyShare = async () => {
-    if (!shareLink) return;
-    try {
-      await navigator.clipboard.writeText(shareLink);
-      setShareCopied(true);
-      setTimeout(() => setShareCopied(false), 2000);
-    } catch (err) {
-      console.error('Failed to copy share link', err);
-    }
-  };
-
   const googleMapsUrl = `https://maps.google.com/?q=${encodeURIComponent(stop.address)}`;
 
   return (
@@ -236,23 +199,15 @@ export default function ServiceEntryPage() {
               </span>
             </div>
           </div>
-          <div className="flex flex-col items-end gap-2">
-            <a
-              href={googleMapsUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-14 h-14 flex items-center justify-center bg-slate-100 dark:bg-surface-700 rounded-xl text-slate-600 dark:text-slate-300 active:bg-slate-200 dark:active:bg-surface-600 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-surface-800"
-              aria-label={`Navigate to ${stop.address}`}
-            >
-              <NavigationIcon className="w-7 h-7" aria-hidden="true" />
-            </a>
-            <button
-              onClick={handleSendOnTheWay}
-              className="px-3 py-2 rounded-lg bg-blue-600 text-white text-xs font-semibold shadow-sm hover:bg-blue-500 transition-colors"
-            >
-              Send On The Way
-            </button>
-          </div>
+          <a
+            href={googleMapsUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-14 h-14 flex items-center justify-center bg-slate-100 dark:bg-surface-700 rounded-xl text-slate-600 dark:text-slate-300 active:bg-slate-200 dark:active:bg-surface-600 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-surface-800"
+            aria-label={`Navigate to ${stop.address}`}
+          >
+            <NavigationIcon className="w-7 h-7" aria-hidden="true" />
+          </a>
         </div>
 
         {/* Gate Code - Still prominent here */}
@@ -269,48 +224,6 @@ export default function ServiceEntryPage() {
           </div>
         )}
       </div>
-
-      {showTrackerShare && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4">
-          <div className="w-full max-w-md rounded-2xl bg-white dark:bg-surface-800 p-5 shadow-xl">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <p className="text-xs uppercase tracking-wide text-blue-600 dark:text-blue-300 font-semibold">On the way</p>
-                <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Share live tracking</h3>
-                <p className="text-sm text-slate-600 dark:text-slate-300 mt-1">
-                  Send this link to the customer so they can see how far away the tech is.
-                </p>
-              </div>
-              <button
-                onClick={() => setShowTrackerShare(false)}
-                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
-                aria-label="Close share modal"
-              >
-                ✕
-              </button>
-            </div>
-            <div className="mt-4 rounded-xl border border-slate-200 dark:border-surface-700 bg-slate-50 dark:bg-surface-900 px-3 py-2 text-xs text-slate-700 dark:text-slate-300 break-all">
-              {shareLink}
-            </div>
-            <div className="mt-4 flex flex-wrap gap-3">
-              <button
-                onClick={handleCopyShare}
-                className="flex-1 rounded-xl bg-slate-900 text-white py-2 text-sm font-semibold hover:bg-slate-800 transition-colors"
-              >
-                {shareCopied ? 'Copied' : 'Copy link'}
-              </button>
-              <a
-                href={shareLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex-1 rounded-xl border border-slate-200 dark:border-surface-700 text-center py-2 text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-surface-700 transition-colors"
-              >
-                Open tracker
-              </a>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Water Chemistry Section */}
       <div className="bg-white dark:bg-surface-800 rounded-2xl p-4 mb-4 shadow-sm transition-colors">

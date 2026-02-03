@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { calculateDistance } from '@/lib/realtime/technician-locations';
+import { fetchDemoTracking, subscribeDemoTracking, type DemoTrackingRow } from '@/lib/realtime/demo-tracking';
 
 const formatUpdated = (timestamp: number) => {
   const deltaMs = Date.now() - timestamp;
@@ -14,31 +16,58 @@ const formatUpdated = (timestamp: number) => {
 
 export default function TrackPage() {
   const searchParams = useSearchParams();
-  const customer = searchParams.get('customer') ?? 'Pool Customer';
-  const tech = searchParams.get('tech') ?? 'PoolOps Tech';
-  const address = searchParams.get('address') ?? 'Phoenix, AZ';
-  const arrival = searchParams.get('arrival') ?? 'Soon';
-  const initialEta = Number(searchParams.get('eta') ?? 12);
-  const initialDistance = Number(searchParams.get('distance') ?? 3.5);
-  const initialUpdated = Number(searchParams.get('updated') ?? Date.now());
-
-  const [etaMinutes, setEtaMinutes] = useState(Number.isFinite(initialEta) ? initialEta : 12);
-  const [distanceMiles, setDistanceMiles] = useState(Number.isFinite(initialDistance) ? initialDistance : 3.5);
-  const [lastUpdated, setLastUpdated] = useState(initialUpdated);
+  const trackerId = searchParams.get('tracker');
+  const [trackerData, setTrackerData] = useState<DemoTrackingRow | null>(null);
+  const [lastUpdated, setLastUpdated] = useState(Date.now());
 
   useEffect(() => {
-    const timer = setInterval(() => {
-      setEtaMinutes(prev => Math.max(1, prev - 1));
-      setDistanceMiles(prev => Math.max(0.1, Number((prev - 0.2).toFixed(1))));
-      setLastUpdated(Date.now());
-    }, 8000);
-    return () => clearInterval(timer);
-  }, []);
+    if (!trackerId) return;
+    let unsubscribe: (() => void) | null = null;
+    let active = true;
+
+    const load = async () => {
+      try {
+        const initial = await fetchDemoTracking(trackerId);
+        if (!active) return;
+        if (initial) {
+          setTrackerData(initial);
+          setLastUpdated(Date.parse(initial.updated_at));
+        }
+        unsubscribe = subscribeDemoTracking(trackerId, (row) => {
+          setTrackerData(row);
+          setLastUpdated(Date.parse(row.updated_at));
+        });
+      } catch (err) {
+        console.error('Failed to load tracker data', err);
+      }
+    };
+
+    void load();
+
+    return () => {
+      active = false;
+      if (unsubscribe) unsubscribe();
+    };
+  }, [trackerId]);
+
+  const customer = trackerData?.customer_name ?? 'Pool Customer';
+  const tech = trackerData?.tech_name ?? 'PoolOps Tech';
+  const address = trackerData?.address ?? 'Phoenix, AZ';
+  const arrival = trackerData?.arrival_time ?? 'Soon';
+  const etaMinutes = trackerData?.eta_minutes ?? 12;
+  const distanceMiles = trackerData?.distance_miles ?? 3.5;
+  const currentLat = trackerData?.latitude;
+  const currentLng = trackerData?.longitude;
 
   const progress = useMemo(() => {
-    if (initialDistance <= 0) return 1;
-    return Math.min(1, Math.max(0, 1 - distanceMiles / initialDistance));
-  }, [distanceMiles, initialDistance]);
+    if (!trackerData || !currentLat || !currentLng) return 0.25;
+    const baseLat = currentLat - 0.02;
+    const baseLng = currentLng - 0.02;
+    const totalDistance = calculateDistance(baseLat, baseLng, currentLat + 0.02, currentLng + 0.02);
+    if (totalDistance <= 0) return 1;
+    const traveled = totalDistance - Math.max(0, distanceMiles);
+    return Math.min(1, Math.max(0.1, traveled / totalDistance));
+  }, [trackerData, currentLat, currentLng, distanceMiles]);
 
   const techX = 10 + progress * 70;
   const customerX = 85;
