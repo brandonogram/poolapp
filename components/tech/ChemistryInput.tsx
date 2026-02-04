@@ -27,13 +27,19 @@ export function ChemistryInput({
     idealRange && value !== null && (value < idealRange.min || value > idealRange.max);
 
   const decrement = () => {
-    if (value === null) return;
+    if (value === null) {
+      onChange(min);
+      return;
+    }
     const newValue = Math.max(min, value - step);
     onChange(Math.round(newValue * 100) / 100);
   };
 
   const increment = () => {
-    if (value === null) return;
+    if (value === null) {
+      onChange(min);
+      return;
+    }
     const newValue = Math.min(max, value + step);
     onChange(Math.round(newValue * 100) / 100);
   };
@@ -65,7 +71,7 @@ export function ChemistryInput({
         {/* Large minus button - 80x60 touch target */}
         <button
           onClick={decrement}
-          disabled={value === null || value <= min}
+          disabled={value !== null && value <= min}
           className="w-16 h-16 bg-slate-100 dark:bg-surface-700 rounded-xl text-2xl font-bold text-slate-600 dark:text-slate-300
                      active:bg-slate-200 dark:active:bg-surface-600 disabled:opacity-40 disabled:cursor-not-allowed
                      transition-colors flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-surface-800"
@@ -95,7 +101,7 @@ export function ChemistryInput({
         {/* Large plus button - 80x60 touch target */}
         <button
           onClick={increment}
-          disabled={value === null || value >= max}
+          disabled={value !== null && value >= max}
           className="w-16 h-16 bg-slate-100 dark:bg-surface-700 rounded-xl text-2xl font-bold text-slate-600 dark:text-slate-300
                      active:bg-slate-200 dark:active:bg-surface-600 disabled:opacity-40 disabled:cursor-not-allowed
                      transition-colors flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-surface-800"

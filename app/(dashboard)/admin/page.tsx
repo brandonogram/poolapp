@@ -115,42 +115,50 @@ export default function AdminPage() {
         </div>
       )}
 
-      <section className="rounded-2xl border border-slate-200 dark:border-surface-700 bg-white dark:bg-surface-800 p-6 shadow-sm space-y-4">
-        <div>
-          <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Photo Requirements</h2>
-          <p className="text-sm text-slate-600 dark:text-slate-300">
-            Toggle which service tasks require a photo before a tech can complete a stop.
-          </p>
+      <section className="rounded-2xl border border-slate-200 dark:border-surface-700 bg-white dark:bg-surface-800 p-5 shadow-sm space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Photo Requirements</h2>
+            <p className="text-sm text-slate-600 dark:text-slate-300">
+              Require a photo for each completed task.
+            </p>
+          </div>
+          <div className="text-xs text-slate-500 dark:text-slate-400">
+            {isSaving ? 'Saving…' : 'Auto‑saved'}
+          </div>
         </div>
-        <div className="grid gap-4">
+
+        <div className="grid gap-3 sm:grid-cols-2">
           {sortedTasks.map(task => (
-            <div
+            <button
               key={task.key}
-              className="flex items-center justify-between gap-4 rounded-2xl border border-slate-200 dark:border-surface-700 bg-white dark:bg-surface-900/40 p-4"
+              onClick={() => toggleRequirement(task.key)}
+              disabled={isSaving || isLoading}
+              className={`flex items-center justify-between gap-3 rounded-xl border px-3 py-2 text-left transition ${
+                requirements[task.key]
+                  ? 'border-blue-200 bg-blue-50 text-blue-900'
+                  : 'border-slate-200 bg-white text-slate-600 dark:border-surface-700 dark:bg-surface-900/40 dark:text-slate-300'
+              } ${isSaving ? 'opacity-60 cursor-not-allowed' : 'hover:border-blue-300'}`}
+              aria-pressed={requirements[task.key]}
             >
               <div>
-                <p className="text-base font-semibold text-slate-900 dark:text-slate-100">{task.label}</p>
-                <p className="text-sm text-slate-500 dark:text-slate-400">{task.description}</p>
+                <p className="text-sm font-semibold">{task.label}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">{task.description}</p>
               </div>
-              <button
-                onClick={() => toggleRequirement(task.key)}
-                disabled={isSaving || isLoading}
-                className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors ${
-                  requirements[task.key] ? 'bg-blue-600' : 'bg-slate-300 dark:bg-surface-600'
-                } ${isSaving ? 'opacity-60 cursor-not-allowed' : ''}`}
-                aria-pressed={requirements[task.key]}
+              <span
+                className={`inline-flex h-6 w-10 items-center rounded-full border px-1 transition ${
+                  requirements[task.key] ? 'border-blue-400 bg-blue-100' : 'border-slate-300 bg-slate-100'
+                }`}
+                aria-hidden="true"
               >
                 <span
-                  className={`inline-block h-6 w-6 transform rounded-full bg-white transition ${
-                    requirements[task.key] ? 'translate-x-7' : 'translate-x-1'
+                  className={`h-4 w-4 rounded-full transition ${
+                    requirements[task.key] ? 'translate-x-4 bg-blue-600' : 'translate-x-0 bg-slate-400'
                   }`}
                 />
-              </button>
-            </div>
+              </span>
+            </button>
           ))}
-        </div>
-        <div className="text-xs text-slate-500 dark:text-slate-400">
-          {isSaving ? 'Saving changes…' : 'Changes save instantly.'}
         </div>
       </section>
 
