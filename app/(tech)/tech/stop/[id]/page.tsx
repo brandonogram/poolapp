@@ -76,12 +76,12 @@ export default function ServiceEntryPage() {
     equipment: false,
   });
 
+  const [chemicalLog, setChemicalLog] = useState<ChemicalLogEntry[]>([]);
   const chemicalsAdded = chemicalLog.length > 0;
   const [photos, setPhotos] = useState<string[]>([]);
   const [notes, setNotes] = useState('');
   const [showPhotoCapture, setShowPhotoCapture] = useState(false);
   const photoInputRef = useRef<HTMLInputElement | null>(null);
-  const [chemicalLog, setChemicalLog] = useState<ChemicalLogEntry[]>([]);
   const [photoRequirements, setPhotoRequirements] = useState<Record<keyof typeof tasks, boolean>>({
     skim: true,
     brush: true,
