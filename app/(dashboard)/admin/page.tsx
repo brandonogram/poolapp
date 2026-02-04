@@ -42,7 +42,8 @@ export default function AdminPage() {
 
     const loadRequirements = async () => {
       try {
-        const { data, error } = await supabase
+        const client = supabase as unknown as { from: (t: string) => { select: (c: string) => Promise<{ data: RequirementRow[] | null; error: unknown }> } };
+        const { data, error } = await client
           .from('photo_requirements')
           .select('task_key, required');
         if (error) {
@@ -78,7 +79,8 @@ export default function AdminPage() {
     setError(null);
 
     try {
-      const { error } = await supabase
+      const client = supabase as unknown as { from: (t: string) => { upsert: (d: object) => Promise<{ error: unknown }> } };
+      const { error } = await client
         .from('photo_requirements')
         .upsert({
           task_key: taskKey,

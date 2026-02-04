@@ -350,7 +350,7 @@ export default function ServiceEntryPage() {
     };
     setTasks(quickTasks);
     completeStop(stopId, {
-      chemistry,
+      chemistry: chemistry as ChemistryReading,
       tasks: quickTasks,
       chemicalsAdded,
       photos,
