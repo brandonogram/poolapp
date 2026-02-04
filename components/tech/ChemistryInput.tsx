@@ -4,7 +4,7 @@ import { useState } from 'react';
 
 interface ChemistryInputProps {
   label: string;
-  value: number;
+  value: number | null;
   onChange: (value: number) => void;
   min: number;
   max: number;
@@ -23,20 +23,33 @@ export function ChemistryInput({
   unit = '',
   idealRange,
 }: ChemistryInputProps) {
-  const isOutOfRange = idealRange && (value < idealRange.min || value > idealRange.max);
+  const isOutOfRange =
+    idealRange && value !== null && (value < idealRange.min || value > idealRange.max);
 
   const decrement = () => {
+    if (value === null) return;
     const newValue = Math.max(min, value - step);
     onChange(Math.round(newValue * 100) / 100);
   };
 
   const increment = () => {
+    if (value === null) return;
     const newValue = Math.min(max, value + step);
     onChange(Math.round(newValue * 100) / 100);
   };
 
+  const handleManualEntry = () => {
+    const raw = window.prompt(`Enter ${label} ${unit ? `(${unit})` : ''}`) || '';
+    const parsed = Number.parseFloat(raw);
+    if (Number.isNaN(parsed)) return;
+    const clamped = Math.min(max, Math.max(min, parsed));
+    const rounded = Math.round(clamped / step) * step;
+    onChange(Math.round(rounded * 100) / 100);
+  };
+
   // Format display value
-  const displayValue = step < 1 ? value.toFixed(1) : Math.round(value).toString();
+  const displayValue =
+    value === null ? '—' : step < 1 ? value.toFixed(1) : Math.round(value).toString();
 
   return (
     <div className="flex items-center justify-between py-3">
@@ -52,7 +65,7 @@ export function ChemistryInput({
         {/* Large minus button - 80x60 touch target */}
         <button
           onClick={decrement}
-          disabled={value <= min}
+          disabled={value === null || value <= min}
           className="w-16 h-16 bg-slate-100 dark:bg-surface-700 rounded-xl text-2xl font-bold text-slate-600 dark:text-slate-300
                      active:bg-slate-200 dark:active:bg-surface-600 disabled:opacity-40 disabled:cursor-not-allowed
                      transition-colors flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-surface-800"
@@ -62,22 +75,27 @@ export function ChemistryInput({
         </button>
 
         {/* Value display */}
-        <div
+        <button
+          type="button"
+          onClick={handleManualEntry}
           className={`w-20 h-16 flex items-center justify-center rounded-xl font-bold text-2xl
             ${isOutOfRange
               ? 'bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400 border-2 border-red-300 dark:border-red-700'
-              : 'bg-white dark:bg-surface-700 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-surface-600'}`}
+              : 'bg-white dark:bg-surface-700 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-surface-600'}
+            ${value === null ? 'text-slate-400 dark:text-slate-500 border-amber-300 dark:border-amber-600' : ''}`}
           role="status"
           aria-label={`${label} value: ${displayValue}${unit}`}
         >
           {displayValue}
-          {unit && <span className="text-sm ml-0.5 text-slate-500 dark:text-slate-400">{unit}</span>}
-        </div>
+          {unit && value !== null && (
+            <span className="text-sm ml-0.5 text-slate-500 dark:text-slate-400">{unit}</span>
+          )}
+        </button>
 
         {/* Large plus button - 80x60 touch target */}
         <button
           onClick={increment}
-          disabled={value >= max}
+          disabled={value === null || value >= max}
           className="w-16 h-16 bg-slate-100 dark:bg-surface-700 rounded-xl text-2xl font-bold text-slate-600 dark:text-slate-300
                      active:bg-slate-200 dark:active:bg-surface-600 disabled:opacity-40 disabled:cursor-not-allowed
                      transition-colors flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-surface-800"

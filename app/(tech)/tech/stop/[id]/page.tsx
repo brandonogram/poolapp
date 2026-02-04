@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useTech, type ChemistryReading } from '@/lib/tech-context';
+import { supabase } from '@/lib/supabase/client';
 import { ChemistryInput } from '@/components/tech/ChemistryInput';
 import { TaskChecklist } from '@/components/tech/TaskChecklist';
 
@@ -34,6 +35,15 @@ type DosingStep = {
   wait: string;
   notes?: string;
   order: number;
+};
+
+type ChemistryEntry = {
+  pH: number | null;
+  chlorine: number | null;
+  alkalinity: number | null;
+  cya: number | null;
+  calcium: number | null;
+  salt: number | null;
 };
 
 const TARGETS = {
@@ -197,13 +207,13 @@ export default function ServiceEntryPage() {
   const nextStop = nextStops[0];
 
   // Chemistry state
-  const [chemistry, setChemistry] = useState<ChemistryReading>({
-    pH: 7.4,
-    chlorine: 2.5,
-    alkalinity: 100,
-    cya: 40,
-    calcium: 250,
-    salt: stop?.poolType === 'Saltwater' ? 3200 : undefined,
+  const [chemistry, setChemistry] = useState<ChemistryEntry>({
+    pH: null,
+    chlorine: null,
+    alkalinity: null,
+    cya: null,
+    calcium: null,
+    salt: null,
   });
 
   // Tasks state
@@ -221,6 +231,14 @@ export default function ServiceEntryPage() {
   const [notes, setNotes] = useState('');
   const [showPhotoCapture, setShowPhotoCapture] = useState(false);
   const photoInputRef = useRef<HTMLInputElement | null>(null);
+  const [photoRequirements, setPhotoRequirements] = useState<Record<keyof typeof tasks, boolean>>({
+    skim: true,
+    brush: true,
+    vacuum: true,
+    baskets: true,
+    filter: true,
+    equipment: true,
+  });
 
   // Redirect if stop not found
   useEffect(() => {
@@ -228,6 +246,45 @@ export default function ServiceEntryPage() {
       router.push('/tech/route');
     }
   }, [stop, router]);
+
+  useEffect(() => {
+    let active = true;
+
+    const loadRequirements = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('photo_requirements')
+          .select('task_key, required');
+        if (error || !data) {
+          if (error) console.error('Failed to load photo requirements', error);
+          return;
+        }
+        if (!active) return;
+        const next: Record<keyof typeof tasks, boolean> = {
+          skim: true,
+          brush: true,
+          vacuum: true,
+          baskets: true,
+          filter: true,
+          equipment: true,
+        };
+        data.forEach((row: { task_key: string; required: boolean }) => {
+          if (row.task_key in next) {
+            next[row.task_key as keyof typeof tasks] = row.required;
+          }
+        });
+        setPhotoRequirements(next);
+      } catch (err) {
+        console.error('Failed to load photo requirements', err);
+      }
+    };
+
+    void loadRequirements();
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   if (!stop) {
     return (
@@ -237,9 +294,32 @@ export default function ServiceEntryPage() {
     );
   }
 
-  const dosing = calculateDosing(chemistry, stop.poolSize, stop.poolType);
+  const requiredFields: (keyof ChemistryEntry)[] = [
+    'pH',
+    'chlorine',
+    'alkalinity',
+    'cya',
+    'calcium',
+  ];
+  if (stop.poolType === 'Saltwater') requiredFields.push('salt');
+
+  const chemistryComplete = requiredFields.every((field) => chemistry[field] !== null);
+
+  const dosing = chemistryComplete
+    ? calculateDosing(chemistry as ChemistryReading, stop.poolSize, stop.poolType)
+    : [
+        {
+          key: 'incomplete',
+          chemical: 'Enter all readings',
+          amount: '-',
+          reason: 'Complete the test to see dosing',
+          wait: '',
+          order: 0,
+        },
+      ];
   const requiredTasks: (keyof typeof tasks)[] = ['skim', 'brush', 'baskets'];
-  const photoRequiredTasks: (keyof typeof tasks)[] = Object.keys(tasks) as (keyof typeof tasks)[];
+  const photoRequiredTasks: (keyof typeof tasks)[] = (Object.keys(tasks) as (keyof typeof tasks)[])
+    .filter(task => photoRequirements[task]);
   const allRequiredComplete = requiredTasks.every(task => tasks[task]);
   const photoRequired = photoRequiredTasks.some(task => tasks[task]);
   const hasRequiredPhoto = !photoRequired || photos.length > 0;
@@ -250,7 +330,7 @@ export default function ServiceEntryPage() {
 
   const handleComplete = () => {
     completeStop(stopId, {
-      chemistry,
+      chemistry: chemistry as ChemistryReading,
       tasks,
       chemicalsAdded,
       photos,
@@ -381,6 +461,12 @@ export default function ServiceEntryPage() {
           </ol>
         </div>
 
+        {!chemistryComplete && (
+          <div className="mb-3 rounded-xl border border-amber-200 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/30 p-3 text-xs text-amber-800 dark:text-amber-200">
+            Tap each reading to enter a value. Chemistry must be completed before you can finish the stop.
+          </div>
+        )}
+
         {/* Chemistry Inputs - Large +/- buttons */}
         <div className="space-y-2 divide-y divide-slate-100 dark:divide-surface-700">
           <ChemistryInput
@@ -414,7 +500,7 @@ export default function ServiceEntryPage() {
           />
           <ChemistryInput
             label="CYA (Stabilizer)"
-            value={chemistry.cya ?? 0}
+            value={chemistry.cya}
             onChange={(v) => setChemistry(prev => ({ ...prev, cya: v }))}
             min={0}
             max={100}
@@ -424,7 +510,7 @@ export default function ServiceEntryPage() {
           />
           <ChemistryInput
             label="Calcium Hardness"
-            value={chemistry.calcium ?? 0}
+            value={chemistry.calcium}
             onChange={(v) => setChemistry(prev => ({ ...prev, calcium: v }))}
             min={0}
             max={600}
@@ -435,7 +521,7 @@ export default function ServiceEntryPage() {
           {stop.poolType === 'Saltwater' && (
             <ChemistryInput
               label="Salt"
-              value={chemistry.salt ?? 0}
+              value={chemistry.salt}
               onChange={(v) => setChemistry(prev => ({ ...prev, salt: v }))}
               min={0}
               max={5000}
@@ -489,7 +575,7 @@ export default function ServiceEntryPage() {
         </ul>
 
         {/* Mark Chemicals Added Button */}
-        {dosing[0].chemical !== 'None needed' && (
+        {dosing[0].chemical !== 'None needed' && dosing[0].chemical !== 'Enter all readings' && (
           <button
             onClick={() => setChemicalsAdded(!chemicalsAdded)}
             className={`mt-4 w-full py-4 rounded-xl font-semibold text-lg transition-all active:scale-98 focus:outline-none focus:ring-2 focus:ring-offset-2 ${
@@ -604,15 +690,15 @@ export default function ServiceEntryPage() {
       {/* Complete Button - Very Large */}
       <button
         onClick={handleComplete}
-        disabled={!allRequiredComplete || !hasRequiredPhoto}
+        disabled={!allRequiredComplete || !hasRequiredPhoto || !chemistryComplete}
         className={`w-full py-6 rounded-2xl font-bold text-xl transition-all active:scale-98 shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-surface-900 ${
-          allRequiredComplete && hasRequiredPhoto
+          allRequiredComplete && hasRequiredPhoto && chemistryComplete
             ? 'bg-green-600 dark:bg-green-700 text-white active:bg-green-700 dark:active:bg-green-600 focus:ring-green-500'
             : 'bg-slate-300 dark:bg-surface-600 text-slate-500 dark:text-slate-400 cursor-not-allowed'
         }`}
-        aria-disabled={!allRequiredComplete || !hasRequiredPhoto}
+        aria-disabled={!allRequiredComplete || !hasRequiredPhoto || !chemistryComplete}
       >
-        {allRequiredComplete && hasRequiredPhoto ? (
+        {allRequiredComplete && hasRequiredPhoto && chemistryComplete ? (
           <span className="flex items-center justify-center gap-2">
             <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -620,12 +706,16 @@ export default function ServiceEntryPage() {
             Complete Stop
           </span>
         ) : (
-          photoRequired && !hasRequiredPhoto ? 'Photo Required' : 'Complete Required Tasks'
+          photoRequired && !hasRequiredPhoto
+            ? 'Photo Required'
+            : !chemistryComplete
+              ? 'Complete Chemistry'
+              : 'Complete Required Tasks'
         )}
       </button>
 
       {/* Next Stop Preview */}
-      {nextStop && allRequiredComplete && (
+      {nextStop && allRequiredComplete && chemistryComplete && (
         <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/30 rounded-2xl border border-blue-200 dark:border-blue-800 transition-colors">
           <p className="text-sm font-semibold text-blue-700 dark:text-blue-400 mb-2">Next Stop</p>
           <p className="font-bold text-blue-900 dark:text-blue-100">{nextStop.customerName}</p>

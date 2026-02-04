@@ -103,6 +103,26 @@ const navigation: NavItem[] = [
       </svg>
     ),
   },
+  {
+    name: 'Admin',
+    href: '/admin',
+    icon: (
+      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={1.5}
+          d="M12 3l7.5 4.5v9L12 21l-7.5-4.5v-9L12 3z"
+        />
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={1.5}
+          d="M12 9.75v6.5m-4-4.25h8"
+        />
+      </svg>
+    ),
+  },
 ];
 
 interface SidebarProps {
